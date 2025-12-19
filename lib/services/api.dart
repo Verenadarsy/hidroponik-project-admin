@@ -372,4 +372,75 @@ class ApiService {
       return _handleError(e);
     }
   }
+
+  static Future<List<dynamic>> getMessageReplies(
+      String token, int messageId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/admin/messages/$messageId/replies'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          return data['data']['messages'] ?? [];
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error getting replies: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> sendReply(
+      String token, int messageId, String content) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/admin/messages/$messageId/reply'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'content': content,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error sending reply: $e');
+      return false;
+    }
+  }
+
+  static Future<List<dynamic>> getAllThreads(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/admin/messages/threads'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          return data['data']['threads'] ?? [];
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error getting threads: $e');
+      return [];
+    }
+  }
 }
