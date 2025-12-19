@@ -52,6 +52,17 @@ class _DashboardPageState extends State<DashboardPage> {
   double lightIntensity = 0;
   double waterLevel = 0;
 
+  // Weather data
+  Map<String, dynamic>? weatherData;
+  bool weatherLoading = false;
+  String selectedCity = 'Bandung';
+  final Map<String, String> locations = {
+    'Bandung': '32.73.19.1001',
+    'Jakarta': '31.71.04.1001',
+    'Surabaya': '35.78.13.1001',
+    'Yogyakarta': '34.71.05.1001',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -75,12 +86,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
     // Load data pertama kali
     await _loadAllData();
+    _fetchWeatherData();
 
     // Setup auto refresh setiap 10 detik
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _loadAllData();
     });
   }
+
 
   void _handleTokenError(String message) {
     setState(() {
@@ -361,7 +374,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return systemOnline ? Colors.green : Colors.red;
   }
 
-  String _getLastUpdateTime() {
+    String _getLastUpdateTime() {
     if (allSensors.isEmpty) {
       return 'No data';
     }
@@ -382,6 +395,99 @@ class _DashboardPageState extends State<DashboardPage> {
       return '${difference.inDays}d ago';
     }
   }
+
+  // Method untuk fetch weather data
+  Future<void> _fetchWeatherData() async {
+    setState(() => weatherLoading = true);
+
+    try {
+      final adm4Code = locations[selectedCity]!;
+      final response = await http.get(
+        Uri.parse('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=$adm4Code'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          weatherData = data;
+          weatherLoading = false;
+        });
+      } else {
+        setState(() => weatherLoading = false);
+      }
+    } catch (e) {
+      if (kDebugMode) print('Weather error: $e');
+      setState(() => weatherLoading = false);
+    }
+  }
+
+  int? _getCurrentWeatherCode() {
+    if (weatherData == null) return null;
+    final data = weatherData!['data'];
+    if (data == null || data.isEmpty) return null;
+    final cuacaList = data[0]['cuaca'] ?? [];
+    if (cuacaList.isEmpty || cuacaList[0].isEmpty) return null;
+    return cuacaList[0][0]['weather'] as int?;
+  }
+
+  Widget _getWeatherIcon(int? code, {double size = 28}) {
+    if (code == null) return Icon(Icons.cloud, size: size, color: Colors.grey);
+
+    // Mostly Clear - matahari + awan
+    if (code == 1) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              left: 0,
+              top: size * 0.1,
+              child: Icon(Icons.wb_sunny, size: size * 0.7, color: const Color(0xFFFDB813)),
+            ),
+            Positioned(
+              right: 0,
+              bottom: size * 0.1,
+              child: Icon(Icons.cloud, size: size * 0.5, color: const Color(0xFFA8D8EA)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    IconData iconData;
+    Color iconColor = const Color(0xFFA8D8EA);
+
+    if (code == 0) {
+      iconData = Icons.wb_sunny;
+      iconColor = const Color(0xFFFDB813);
+    } else if (code == 2) {
+      iconData = Icons.cloud_queue;
+    } else if (code == 3) {
+      iconData = Icons.cloud;
+    } else if (code >= 60 && code <= 63) {
+      iconData = Icons.cloudy_snowing;
+    } else if (code >= 95 && code <= 97) {
+      iconData = Icons.thunderstorm;
+    } else {
+      iconData = Icons.cloud;
+    }
+
+    return Icon(iconData, size: size, color: iconColor);
+  }
+
+  String _getWeatherDesc(int? code) {
+    if (code == null) return 'Unknown';
+    if (code == 0) return 'Sunny';
+    if (code == 1) return 'Mostly Clear';
+    if (code == 2) return 'Partly Cloudy';
+    if (code == 3) return 'Cloudy';
+    if (code >= 60 && code <= 63) return 'Rainy';
+    if (code >= 95 && code <= 97) return 'Thunderstorm';
+    return 'Cloudy';
+  }
+
 
   Future<void> _manualRefresh() async {
     setState(() {
@@ -551,6 +657,139 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // ✅ WEATHER CARD - DI ATAS SYSTEM OVERVIEW
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFA8D8EA).withOpacity(0.15),
+                        const Color(0xFF7FC4DD).withOpacity(0.08),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFA8D8EA).withOpacity(0.3)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: weatherLoading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: mediumGreen,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Loading weather...',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: darkGreen,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        )
+                      : weatherData != null
+                          ? Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.7),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: _getWeatherIcon(_getCurrentWeatherCode(), size: 36),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            size: 14,
+                                            color: darkGreen.withOpacity(0.7),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            selectedCity,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: darkGreen.withOpacity(0.8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _getWeatherDesc(_getCurrentWeatherCode()),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: darkGreen,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°',
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w800,
+                                        color: darkGreen,
+                                        height: 1,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Celsius',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.cloud_off, color: Colors.grey.shade400, size: 24),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Weather unavailable',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                ),
+
+                const SizedBox(height: 24),
+
+
                 // Stats cards title
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -753,8 +992,6 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 32),
 
                 // Quick Actions title
                 Padding(
