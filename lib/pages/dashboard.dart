@@ -84,6 +84,12 @@ class _DashboardPageState extends State<DashboardPage> {
     'Yogyakarta': '34.71.05.1001',
   };
 
+  // Air Quality data
+    Map<String, dynamic>? airQualityData;
+    bool airQualityLoading = false;
+    String aqiStatus = 'Good';
+    Color aqiColor = Colors.green;
+
   @override
   void initState() {
     super.initState();
@@ -108,6 +114,7 @@ class _DashboardPageState extends State<DashboardPage> {
     // Load data pertama kali
     await _loadAllData();
     _fetchWeatherData();
+    _fetchAirQualityData();
 
     // Setup auto refresh setiap 10 detik
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
@@ -477,6 +484,7 @@ class _DashboardPageState extends State<DashboardPage> {
     if (code >= 95 && code <= 97) return 'Thunderstorm';
     return 'Cloudy';
   }
+
 
   Future<void> _manualRefresh() async {
     setState(() {
@@ -893,86 +901,121 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                 ),
 
-                // Stats cards dengan layout baru
-                Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 24),
+
+
+                // Stats cards title
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                gradient: accentGradient,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'System Overview',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: deepForest,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const Spacer(),
-                            _buildRefreshButton(),
-                          ],
+                      Container(
+                        width: 4,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [darkGreen, mediumGreen],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      // Grid Stats dengan card modern
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.2,
-                        children: [
-                          _statCard(
-                            title: 'Active Users',
-                            value: activeUsers.toString(),
-                            icon: Icons.supervisor_account_rounded,
-                            color: steelBlue,
-                            subtitle: 'Users online',
-                            accentColor: steelBlue,
+                      const SizedBox(width: 12),
+                      Text(
+                        'System Overview',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: darkGreen,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: _manualRefresh,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                          _statCard(
-                            title: 'Total Sensors',
-                            value: _getTotalSensors().toString(),
-                            icon: Icons.device_hub_rounded,
-                            color: vibrantGreen,
-                            subtitle: 'Active sensors',
-                            accentColor: limeAccent,
+                          decoration: BoxDecoration(
+                            color: mediumGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: mediumGreen.withOpacity(0.3),
+                            ),
                           ),
-                          _statCard(
-                            title: 'Messages',
-                            value: totalMessages.toString(),
-                            icon: Icons.forum_rounded,
-                            color: royalPurple,
-                            subtitle: 'Unread',
-                            accentColor: Colors.purpleAccent,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.refresh_rounded,
+                                size: 14,
+                                color: mediumGreen,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Refresh',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: mediumGreen,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                          _statCard(
-                            title: 'System Status',
-                            value: _getSystemStatus(),
-                            icon: Icons.cloud_rounded,
-                            color: _getSystemStatusColor(),
-                            subtitle: systemOnline
-                                ? 'Optimal'
-                                : 'Needs attention',
-                            accentColor: _getSystemStatusColor(),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
+                ),
+
+                // Stats grid
+                GridView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.15,
+                  ),
+                  children: [
+                    _statCard(
+                      title: 'Active Users',
+                      value: activeUsers.toString(),
+                      icon: Icons.people_alt_rounded,
+                      color: accentBlue,
+                      subtitle: activeUsers > 1
+                          ? '$activeUsers users'
+                          : 'Admin only',
+                    ),
+                    _statCard(
+                      title: 'Total Sensors',
+                      value: _getTotalSensors().toString(),
+                      icon: Icons.sensors_rounded,
+                      color: mediumGreen,
+                      subtitle: '${allSensors.length} readings',
+                    ),
+                    _statCard(
+                      title: 'Messages',
+                      value: totalMessages.toString(),
+                      icon: Icons.message_rounded,
+                      color: accentPurple,
+                      subtitle: totalMessages > 0
+                          ? '$totalMessages new'
+                          : 'No new messages',
+                    ),
+                    _statCard(
+                      title: 'System Status',
+                      value: _getSystemStatus(),
+                      icon: Icons.wifi_tethering_rounded,
+                      color: _getSystemStatusColor(),
+                      subtitle: systemOnline
+                          ? 'All systems go'
+                          : 'Check system',
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 32),
@@ -1845,6 +1888,37 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+
+  Widget _pollutantInfo(String label, String value, String unit) {
+  return Column(
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: darkGreen,
+        ),
+      ),
+      Text(
+        unit,
+        style: TextStyle(
+          fontSize: 10,
+          color: Colors.grey.shade500,
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _actionCard({
     required IconData icon,
