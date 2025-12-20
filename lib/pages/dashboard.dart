@@ -21,16 +21,61 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   // Enhanced Color palette - lebih bold dan modern
-  final Color deepForest = const Color(0xFF1B4D3E);
-  final Color vibrantGreen = const Color(0xFF2E8B57);
-  final Color limeAccent = const Color(0xFF9ACD32);
-  final Color mintCream = const Color(0xFFF5FFFA);
-  final Color darkTeal = const Color(0xFF006D5B);
-  final Color goldAccent = const Color(0xFFFFD700);
-  final Color coralRed = const Color(0xFFFF6B6B);
-  final Color royalPurple = const Color(0xFF6A5ACD);
-  final Color steelBlue = const Color(0xFF4682B4);
-  final Color darkSlate = const Color(0xFF2F4F4F);
+  final Color primary = const Color(0xFF2E7D32);
+  final Color primaryLight = const Color(0xFF4CAF50);
+  final Color primaryDark = const Color(0xFF1B5E20);
+
+  // Neutral Colors
+  final Color background = const Color(0xFFF5F7FA);
+  final Color surface = Colors.white;
+  final Color textPrimary = const Color(0xFF1A1A1A);
+  final Color textSecondary = const Color(0xFF6B7280);
+
+  // Accent Colors - minimal usage
+  final Color accentBlue = const Color(0xFF2196F3);
+  final Color accentOrange = const Color(0xFFFF9800);
+  final Color accentRed = const Color(0xFFEF5350);
+  final Color accentPurple = const Color(0xFF9C27B0);
+
+  // Sensor Colors
+  final Color tempColor = const Color(0xFFEF5350);
+  final Color humidColor = const Color(0xFF42A5F5);
+  final Color phColor = const Color(0xFF66BB6A);
+  final Color ecColor = const Color(0xFFFFB74D);
+  final Color lightColor = const Color(0xFFFFA726);
+  final Color waterColor = const Color(0xFF29B6F6);
+
+  // Backward compatibility getters
+  Color get vibrantGreen => primary;
+  Color get limeAccent => primaryLight;
+  Color get mintCream => background;
+  Color get darkTeal => primaryDark;
+  Color get goldAccent => accentOrange;
+  Color get coralRed => accentRed;
+  Color get royalPurple => accentPurple;
+  Color get steelBlue => accentBlue;
+  Color get darkSlate => textPrimary;
+  Color get darkGreen => primaryDark;
+  Color get mediumGreen => primary;
+  Color get deepForest => primaryDark;
+
+  // Additional Colors// Design System Constants
+  static const double radiusSmall = 12.0;
+  static const double radiusMedium = 16.0;
+  static const double radiusLarge = 20.0;
+  static const double radiusXLarge = 24.0;
+
+  static const double spacingXSmall = 8.0;
+  static const double spacingSmall = 12.0;
+  static const double spacingMedium = 16.0;
+  static const double spacingLarge = 24.0;
+  static const double spacingXLarge = 32.0;
+
+  static const double fontSmall = 12.0;
+  static const double fontMedium = 14.0;
+  static const double fontLarge = 16.0;
+  static const double fontXLarge = 20.0;
+  static const double fontTitle = 24.0;
 
   // Gradient colors
   final LinearGradient primaryGradient = const LinearGradient(
@@ -365,8 +410,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Color _getSystemStatusColor() {
     if (isLoading) return Colors.grey;
-    if (hasError) return coralRed;
-    return systemOnline ? limeAccent : coralRed;
+    if (hasError) return accentRed;
+    return systemOnline ? primaryLight : accentRed;
   }
 
   String _getLastUpdateTime() {
@@ -485,6 +530,73 @@ class _DashboardPageState extends State<DashboardPage> {
     return 'Cloudy';
   }
 
+    Future<void> _fetchAirQualityData() async {
+      setState(() => airQualityLoading = true);
+
+      try {
+        final response = await http.get(
+          Uri.parse('https://api.waqi.info/feed/bandung/?token=demo'),
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+
+          // ✅ PERBAIKAN: Cek struktur response yang benar
+          if (data['status'] == 'ok' && data['data'] != null) {
+            setState(() {
+              airQualityData = data;
+
+              // ✅ PERBAIKAN: Ambil AQI langsung sebagai int
+              final aqi = data['data']['aqi'] is int
+                  ? data['data']['aqi']
+                  : int.tryParse(data['data']['aqi'].toString()) ?? 0;
+
+              // Set status berdasarkan AQI
+              if (aqi <= 50) {
+                aqiStatus = 'Good';
+                aqiColor = Colors.green;
+              } else if (aqi <= 100) {
+                aqiStatus = 'Moderate';
+                aqiColor = Colors.yellow;
+              } else if (aqi <= 150) {
+                aqiStatus = 'Unhealthy for Sensitive';
+                aqiColor = Colors.orange;
+              } else {
+                aqiStatus = 'Unhealthy';
+                aqiColor = Colors.red;
+              }
+
+              airQualityLoading = false;
+            });
+          } else {
+            // ✅ Jika API gagal, gunakan data dummy
+            setState(() {
+              airQualityData = {
+                'data': {'aqi': 55}
+              };
+              aqiStatus = 'Good';
+              aqiColor = Colors.green;
+              airQualityLoading = false;
+            });
+          }
+        } else {
+          setState(() => airQualityLoading = false);
+        }
+      } catch (e) {
+        if (kDebugMode) print('Air quality error: $e');
+
+        // ✅ FALLBACK: Gunakan data dummy jika error
+        setState(() {
+          airQualityData = {
+            'data': {'aqi': 55}
+          };
+          aqiStatus = 'Good';
+          aqiColor = Colors.green;
+          airQualityLoading = false;
+        });
+      }
+    }
+
 
   Future<void> _manualRefresh() async {
     setState(() {
@@ -502,150 +614,148 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return Scaffold(
-      backgroundColor: mintCream,
-      floatingActionButton: FloatingActionButton(
+      backgroundColor: background,
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: FloatingActionButton.small(
         onPressed: _manualRefresh,
-        backgroundColor: vibrantGreen,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white, width: 2),
-        ),
+        backgroundColor: primary,
         child: isLoading
-            ? CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
-            : const Icon(Icons.refresh_rounded, size: 26),
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Icon(Icons.refresh, size: 20),
       ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           // Enhanced App bar dengan gradient dan efek glassmorphism
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 160, // KURANGI dari 220
             floating: false,
             pinned: true,
+            backgroundColor: primary,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [deepForest.withValues(alpha: 0.9), darkTeal],
-                    stops: const [0.0, 1.0],
-                  ),
+                  color: primary, // HAPUS gradient
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(40),
-                    bottomRight: Radius.circular(40),
+                    bottomLeft: Radius.circular(24), // KURANGI dari 40
+                    bottomRight: Radius.circular(24),
                   ),
                 ),
-                child: Stack(
-                  children: [
-                    // Background pattern
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Opacity(
-                        opacity: 0.1,
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: accentGradient,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -50,
-                      left: -50,
-                      child: Opacity(
-                        opacity: 0.1,
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: accentGradient,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Content
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: 16,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 60),
-                          Row(
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  gradient: accentGradient,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Welcome Back,',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.9,
-                                        ),
-                                        letterSpacing: 0.5,
-                                      ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'HydroGrow Dashboard',
+                                    style: TextStyle(
+                                      fontSize: 24, // KONSISTEN
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'HydroGrow Admin',
-                                      style: TextStyle(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        letterSpacing: 0.5,
-                                      ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Admin Panel',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white.withOpacity(0.8),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
+                            ),
+                            // Status badge - lebih kecil
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: _getSystemStatusColor(),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _getSystemStatus(),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 14,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Updated ${_getLastUpdateTime()}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                            if (totalMessages > 0) ...[
+                              const Spacer(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
+                                  horizontal: 8,
+                                  vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.3),
-                                  ),
+                                  color: accentRed,
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
-                                      Icons.circle,
+                                    const Icon(
+                                      Icons.notifications,
                                       size: 12,
-                                      color: _getSystemStatusColor(),
+                                      color: Colors.white,
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      _getSystemStatus(),
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
+                                      '$totalMessages',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -653,256 +763,183 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.update_rounded,
-                                size: 16,
-                                color: Colors.white.withValues(alpha: 0.8),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Last update: ${_getLastUpdateTime()}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Spacer(),
-                              if (totalMessages > 0)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: accentGradient,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: limeAccent.withValues(
-                                          alpha: 0.4,
-                                        ),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.notifications_active_rounded,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '$totalMessages New',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 30),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
-            elevation: 15,
-            shadowColor: deepForest.withValues(alpha: 0.5),
-            backgroundColor: deepForest,
-            actions: [
-              if (isLoading)
-                Padding(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: Center(
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+            elevation: 4, // KURANGI dari 15
+            shadowColor: Colors.black26,
           ),
-
           // Main content
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // ✅ WEATHER CARD - DI ATAS SYSTEM OVERVIEW
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        weatherBlue.withValues(alpha: 0.15),
-                        weatherLightBlue.withValues(alpha: 0.08),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: weatherBlue.withValues(alpha: 0.3),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: weatherLoading
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: vibrantGreen,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Loading weather...',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: deepForest,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        )
-                      : weatherData != null
-                      ? Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: _getWeatherIcon(
-                                _getCurrentWeatherCode(),
-                                size: 36,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.location_on,
-                                        size: 14,
-                                        color: deepForest.withValues(
-                                          alpha: 0.7,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        selectedCity,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: deepForest.withValues(
-                                            alpha: 0.8,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _getWeatherDesc(_getCurrentWeatherCode()),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: deepForest,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°',
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w800,
-                                    color: deepForest,
-                                    height: 1,
-                                  ),
-                                ),
-                                Text(
-                                  'Celsius',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_off,
-                              color: Colors.grey.shade400,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Weather unavailable',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey.shade600,
-                              ),
+                Row(
+                  children: [
+                    // Weather Card - Compact
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: surface,
+                          borderRadius: BorderRadius.circular(radiusMedium),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
+                        child: weatherLoading
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : weatherData != null
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          _getWeatherIcon(
+                                            _getCurrentWeatherCode(),
+                                            size: 32,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°C',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: textPrimary,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _getWeatherDesc(_getCurrentWeatherCode()),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : Center(
+                                    child: Text(
+                                      'No data',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Air Quality Card - Compact
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: surface,
+                          borderRadius: BorderRadius.circular(radiusMedium),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: airQualityLoading
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : airQualityData != null
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.air,
+                                            size: 32,
+                                            color: aqiColor,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${airQualityData!['data']['aqi']}',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: aqiColor,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  aqiStatus,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : Center(
+                                    child: Text(
+                                      'No data',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 24), // SPACING KONSISTEN
 
+                const SizedBox(height: 24),
 
                 // Stats cards title
                 Padding(
@@ -913,11 +950,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         width: 4,
                         height: 20,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [darkGreen, mediumGreen],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
+                          color: primary,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -925,10 +958,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       Text(
                         'System Overview',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: fontXLarge,
                           fontWeight: FontWeight.w700,
-                          color: darkGreen,
-                          letterSpacing: 0.5,
+                          color: textPrimary,
                         ),
                       ),
                       const Spacer(),
@@ -940,30 +972,30 @@ class _DashboardPageState extends State<DashboardPage> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: mediumGreen.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: mediumGreen.withOpacity(0.3),
+                          color: primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: primary.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.refresh_rounded,
+                              size: 14,
+                              color: primary,
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.refresh_rounded,
-                                size: 14,
-                                color: mediumGreen,
+                            const SizedBox(width: 4),
+                            Text(
+                              'Refresh',
+                              style: TextStyle(
+                                fontSize: fontSmall,
+                                color: primary,
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Refresh',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: mediumGreen,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
                         ),
                       ),
                     ],
@@ -994,7 +1026,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       title: 'Total Sensors',
                       value: _getTotalSensors().toString(),
                       icon: Icons.sensors_rounded,
-                      color: mediumGreen,
+                      color: primary,
                       subtitle: '${allSensors.length} readings',
                     ),
                     _statCard(
@@ -1034,7 +1066,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               width: 4,
                               height: 24,
                               decoration: BoxDecoration(
-                                gradient: accentGradient,
+                                color: primaryLight,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1042,10 +1074,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             Text(
                               'Live Sensor Data',
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: fontXLarge,
                                 fontWeight: FontWeight.w800,
-                                color: deepForest,
-                                letterSpacing: 0.3,
+                                color: textPrimary,
                               ),
                             ),
                             const Spacer(),
@@ -1055,10 +1086,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: vibrantGreen.withValues(alpha: 0.1),
+                                color: primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: vibrantGreen.withValues(alpha: 0.3),
+                                  color: primary.withOpacity(0.3),
                                 ),
                               ),
                               child: Row(
@@ -1066,14 +1097,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                   Icon(
                                     Icons.schedule_rounded,
                                     size: 14,
-                                    color: vibrantGreen,
+                                    color: primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Real-time',
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: vibrantGreen,
+                                      fontSize: fontSmall,
+                                      color: primary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -1126,31 +1157,17 @@ class _DashboardPageState extends State<DashboardPage> {
                             title: 'pH Level',
                             value: phLevel.toStringAsFixed(2),
                             icon: Icons.science_rounded,
-                            color: vibrantGreen,
+                            color: phColor,
                             unit: 'pH Scale',
-                            gradient: LinearGradient(
-                              colors: [
-                                vibrantGreen.withValues(alpha: 0.9),
-                                limeAccent,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            gradient: const LinearGradient(colors: []),
                           ),
                           _sensorCard(
                             title: 'EC Level',
                             value: ecLevel.toStringAsFixed(2),
                             icon: Icons.bolt_rounded,
-                            color: goldAccent,
+                            color: ecColor,
                             unit: 'mS/cm',
-                            gradient: LinearGradient(
-                              colors: [
-                                goldAccent.withValues(alpha: 0.9),
-                                Colors.amberAccent,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            gradient: const LinearGradient(colors: []),
                           ),
                           _sensorCard(
                             title: 'Light',
@@ -1171,16 +1188,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             title: 'Water Level',
                             value: '${waterLevel.toStringAsFixed(0)}%',
                             icon: Icons.waves_rounded,
-                            color: steelBlue,
+                            color: waterColor,
                             unit: 'Percent',
-                            gradient: LinearGradient(
-                              colors: [
-                                steelBlue.withValues(alpha: 0.9),
-                                Colors.lightBlueAccent,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            gradient: const LinearGradient(colors: []),
                           ),
                         ],
                       ),
@@ -1204,7 +1214,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               width: 4,
                               height: 24,
                               decoration: BoxDecoration(
-                                gradient: accentGradient,
+                                color: primaryLight,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1212,10 +1222,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             Text(
                               'Quick Actions',
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: fontXLarge,
                                 fontWeight: FontWeight.w800,
-                                color: deepForest,
-                                letterSpacing: 0.3,
+                                color: textPrimary,
                               ),
                             ),
                             const Spacer(),
@@ -1225,14 +1234,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: deepForest.withValues(alpha: 0.1),
+                                color: primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 '${_getTotalSensors()} Available',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: deepForest,
+                                  fontSize: fontSmall,
+                                  color: primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1247,15 +1256,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             icon: Icons.people_outline_rounded,
                             title: 'User Management',
                             subtitle: 'Manage system users & permissions',
-                            color: steelBlue,
-                            gradient: LinearGradient(
-                              colors: [
-                                steelBlue.withValues(alpha: 0.9),
-                                Colors.lightBlueAccent,
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                            color: accentBlue,
+                            gradient: const LinearGradient(colors: []),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -1270,15 +1272,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             icon: Icons.sensors_rounded,
                             title: 'Sensor Dashboard',
                             subtitle: 'Detailed sensor analytics & control',
-                            color: vibrantGreen,
-                            gradient: LinearGradient(
-                              colors: [
-                                vibrantGreen.withValues(alpha: 0.9),
-                                limeAccent,
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                            color: primary,
+                            gradient: const LinearGradient(colors: []),
                             badgeCount: _getTotalSensors(),
                             onTap: () {
                               Navigator.push(
@@ -1297,15 +1292,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             icon: Icons.analytics_rounded,
                             title: 'Analytics Center',
                             subtitle: 'Performance reports & insights',
-                            color: royalPurple,
-                            gradient: LinearGradient(
-                              colors: [
-                                royalPurple.withValues(alpha: 0.9),
-                                Colors.purpleAccent,
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                            color: accentPurple,
+                            gradient: const LinearGradient(colors: []),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -1321,14 +1309,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             title: 'Message Center',
                             subtitle: 'View & respond to user messages',
                             color: Colors.teal,
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.teal.withValues(alpha: 0.9),
-                                Colors.tealAccent,
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                            gradient: const LinearGradient(colors: []),
                             badgeCount: totalMessages,
                             onTap: () {
                               Navigator.push(
@@ -1344,15 +1325,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             icon: Icons.settings_rounded,
                             title: 'System Settings',
                             subtitle: 'Configure system parameters',
-                            color: goldAccent,
-                            gradient: LinearGradient(
-                              colors: [
-                                goldAccent.withValues(alpha: 0.9),
-                                Colors.amberAccent,
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                            color: accentOrange,
+                            gradient: const LinearGradient(colors: []),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -1367,15 +1341,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             icon: Icons.history_toggle_off_rounded,
                             title: 'Activity Log',
                             subtitle: 'System events & audit trail',
-                            color: darkSlate,
-                            gradient: LinearGradient(
-                              colors: [
-                                darkSlate.withValues(alpha: 0.9),
-                                Colors.grey.shade600,
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                            color: Colors.grey.shade700,
+                            gradient: const LinearGradient(colors: []),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -1397,15 +1364,15 @@ class _DashboardPageState extends State<DashboardPage> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        deepForest.withValues(alpha: 0.05),
-                        vibrantGreen.withValues(alpha: 0.05),
+                        primary.withOpacity(0.05),
+                        primaryLight.withOpacity(0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: vibrantGreen.withValues(alpha: 0.2),
+                      color: primary.withOpacity(0.2),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -1418,24 +1385,17 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          gradient: accentGradient,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: limeAccent.withValues(alpha: 0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
+                          color: primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           isLoading
                               ? Icons.sync_rounded
                               : Icons.info_outline_rounded,
-                          color: Colors.white,
-                          size: 28,
+                          color: primary,
+                          size: 24,
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -1446,9 +1406,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             Text(
                               'System Information',
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: deepForest,
+                                fontSize: fontLarge,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -1471,25 +1431,18 @@ class _DashboardPageState extends State<DashboardPage> {
                                 child: Container(
                                   height: 6,
                                   decoration: BoxDecoration(
-                                    color: vibrantGreen.withValues(alpha: 0.1),
+                                    color: primary.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(3),
                                   ),
                                   child: FractionallySizedBox(
                                     alignment: Alignment.centerLeft,
                                     widthFactor: systemOnline ? 0.9 : 0.4,
                                     child: Container(
-                                      decoration: BoxDecoration(
-                                        gradient: systemOnline
-                                            ? accentGradient
-                                            : LinearGradient(
-                                                colors: [
-                                                  coralRed,
-                                                  Colors.orangeAccent,
-                                                ],
-                                              ),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
+                                    decoration: BoxDecoration(
+                                      color: systemOnline ? primaryLight : accentRed,
+                                      borderRadius: BorderRadius.circular(3),
                                     ),
+                                  ),
                                   ),
                                 ),
                               ),
@@ -1516,15 +1469,11 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [vibrantGreen, darkTeal],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
+          color: primary,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: vibrantGreen.withValues(alpha: 0.3),
+              color: primary.withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -1532,9 +1481,9 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         child: Row(
           children: [
-            Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
+            const Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
             const SizedBox(width: 8),
-            Text(
+            const Text(
               'Refresh',
               style: TextStyle(
                 fontSize: 14,
@@ -1550,7 +1499,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildErrorScreen() {
     return Scaffold(
-      backgroundColor: mintCream,
+      backgroundColor: background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -1562,17 +1511,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [coralRed, Colors.orangeAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  colors: [accentRed, Colors.orangeAccent],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentRed.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: coralRed.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                ],
                 ),
                 child: Icon(
                   Icons.error_outline_rounded,
@@ -1586,7 +1535,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: deepForest,
+                  color: textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1597,7 +1546,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: vibrantGreen.withValues(alpha: 0.2),
+                    color: primary.withOpacity(0.2),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -1626,7 +1575,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.pushReplacementNamed(context, '/login');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: deepForest,
+                      backgroundColor: primary,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
                         vertical: 16,
@@ -1635,7 +1584,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 5,
-                      shadowColor: deepForest.withValues(alpha: 0.4),
+                      shadowColor: primary.withOpacity(0.4),
                     ),
                     child: const Text(
                       'Back to Login',
@@ -1657,7 +1606,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: vibrantGreen, width: 2),
+                        side: BorderSide(color: primary, width: 2),
                       ),
                       elevation: 3,
                     ),
@@ -1666,7 +1615,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: vibrantGreen,
+                        color: primary,
                       ),
                     ),
                   ),
@@ -1685,107 +1634,74 @@ class _DashboardPageState extends State<DashboardPage> {
     required IconData icon,
     required Color color,
     required String subtitle,
-    required Color accentColor,
   }) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.1),
-            color.withValues(alpha: 0.05),
-            Colors.white.withValues(alpha: 0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        color: surface,
+        borderRadius: BorderRadius.circular(radiusMedium),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        color.withValues(alpha: 0.2),
-                        accentColor.withValues(alpha: 0.3),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: color, size: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: color.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
                 ),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  subtitle.split(' ').last, // ambil kata terakhir aja
                   style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     color: color,
-                    letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: deepForest.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1796,95 +1712,65 @@ class _DashboardPageState extends State<DashboardPage> {
     required IconData icon,
     required Color color,
     required String unit,
-    required LinearGradient gradient,
+    required LinearGradient gradient, // tidak dipakai lagi
   }) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [Colors.white, color.withValues(alpha: 0.05)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        border: Border.all(color: color.withValues(alpha: 0.15)),
+        color: surface,
+        borderRadius: BorderRadius.circular(radiusMedium),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: gradient,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    unit,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const Spacer(),
+              Text(
+                unit,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: textSecondary,
                 ),
-              ],
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: deepForest,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: textSecondary,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1906,14 +1792,14 @@ class _DashboardPageState extends State<DashboardPage> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w700,
-          color: darkGreen,
+          color: primary,
         ),
       ),
       Text(
         unit,
         style: TextStyle(
           fontSize: 10,
-          color: Colors.grey.shade500,
+          color: primary,
         ),
       ),
     ],
@@ -1925,7 +1811,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required String title,
     required String subtitle,
     required Color color,
-    required LinearGradient gradient,
+    required LinearGradient gradient, // tidak dipakai
     required VoidCallback onTap,
     int? badgeCount,
   }) {
@@ -1933,81 +1819,64 @@ class _DashboardPageState extends State<DashboardPage> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        splashColor: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(radiusMedium),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, color.withValues(alpha: 0.05)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
+            color: surface,
+            borderRadius: BorderRadius.circular(radiusMedium),
+            border: Border.all(color: Colors.grey.shade200),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Row(
             children: [
               Stack(
+                clipBehavior: Clip.none,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      gradient: gradient,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, color: Colors.white, size: 24),
+                    child: Icon(icon, color: color, size: 22),
                   ),
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
-                      top: -4,
-                      right: -4,
+                      top: -6,
+                      right: -6,
                       child: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: coralRed,
+                          color: accentRed,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: coralRed.withValues(alpha: 0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          border: Border.all(color: surface, width: 2),
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 24,
-                          minHeight: 24,
+                          minWidth: 20,
+                          minHeight: 20,
                         ),
-                        child: Text(
-                          badgeCount > 99 ? '99+' : badgeCount.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
+                        child: Center(
+                          child: Text(
+                            badgeCount > 9 ? '9+' : badgeCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2015,34 +1884,26 @@ class _DashboardPageState extends State<DashboardPage> {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: deepForest,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        color: textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: color,
-                ),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: textSecondary,
               ),
             ],
           ),
