@@ -212,75 +212,77 @@ class ApiService {
   }
 
   // ========== MESSAGES ==========
-  static Future<List<UserMessage>> getUserMessages(String token) async {
+  static Future<List<AdminMessage>> getAdminMessages(String token) async {
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/api/user/messages"),
-        headers: {"Authorization": "Bearer $token"},
+        Uri.parse("$baseUrl/api/admin/messages"),
+        headers: _getHeaders(token),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List messages = data["messages"] ?? [];
+        final List messages = data["data"] ?? [];
 
         return messages
-            .map((m) => UserMessage.fromJson(Map<String, dynamic>.from(m)))
+            .map((m) => AdminMessage.fromJson(Map<String, dynamic>.from(m)))
             .toList();
       } else {
-        print('❌ Failed to get messages: ${response.statusCode}');
+        print('❌ Failed admin messages: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('❌ Messages error: $e');
+      print('❌ Admin messages error: $e');
       return [];
     }
   }
 
-  // NEW: Get message count (for badge)
-  static Future<Map<String, dynamic>> getMessageCount(String token) async {
+  static Future<int> getAdminUnreadCount(String token) async {
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/api/user/messages/count"),
-        headers: {"Authorization": "Bearer $token"},
+        Uri.parse("$baseUrl/api/admin/messages/unread-count"),
+        headers: _getHeaders(token),
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        return {'status': false, 'total_count': 0, 'unread_count': 0};
+        final data = jsonDecode(response.body);
+        return data["unread"] ?? 0;
       }
+      return 0;
     } catch (e) {
-      print('❌ Message count error: $e');
-      return {'status': false, 'total_count': 0, 'unread_count': 0};
+      print('❌ Unread count error: $e');
+      return 0;
     }
   }
 
   // NEW: Mark message as read
-  static Future<bool> markMessageAsRead(String token, int messageId) async {
+  static Future<bool> markAdminMessageAsRead(
+    String token,
+    int messageId,
+  ) async {
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/api/messages/$messageId/read"),
-        headers: {"Authorization": "Bearer $token"},
+        Uri.parse("$baseUrl/api/admin/messages/$messageId/read"),
+        headers: _getHeaders(token),
       );
 
       return response.statusCode == 200;
     } catch (e) {
-      print('❌ Mark as read error: $e');
+      print('❌ Mark admin message read error: $e');
       return false;
     }
   }
 
   // NEW: Delete message
-  static Future<bool> deleteMessage(String token, int messageId) async {
+  static Future<bool> deleteAdminMessage(String token, int messageId) async {
     try {
       final response = await http.delete(
-        Uri.parse("$baseUrl/api/messages/$messageId"),
-        headers: {"Authorization": "Bearer $token"},
+        Uri.parse("$baseUrl/api/admin/messages/$messageId"),
+        headers: _getHeaders(token),
       );
 
       return response.statusCode == 200;
     } catch (e) {
-      print('❌ Delete message error: $e');
+      print('❌ Delete admin message error: $e');
       return false;
     }
   }
@@ -368,6 +370,77 @@ class ApiService {
       return jsonDecode(response.body);
     } catch (e) {
       return _handleError(e);
+    }
+  }
+
+  static Future<List<dynamic>> getMessageReplies(
+      String token, int messageId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/admin/messages/$messageId/replies'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          return data['data']['messages'] ?? [];
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error getting replies: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> sendReply(
+      String token, int messageId, String content) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/admin/messages/$messageId/reply'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'content': content,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error sending reply: $e');
+      return false;
+    }
+  }
+
+  static Future<List<dynamic>> getAllThreads(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/admin/messages/threads'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          return data['data']['threads'] ?? [];
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error getting threads: $e');
+      return [];
     }
   }
 }
