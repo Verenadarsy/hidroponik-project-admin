@@ -25,9 +25,9 @@ class _MessagesPageState extends State<MessagesPage> {
   String? _token;
 
   // Thread management
-  Map<int, ChatThread> _chatThreads = {}; // Key: sender_id
-  Map<int, TextEditingController> _replyControllers = {};
-  Map<int, bool> _isReplying = {};
+  final Map<int, ChatThread> _chatThreads = {}; // Key: sender_id
+  final Map<int, TextEditingController> _replyControllers = {};
+  final Map<int, bool> _isReplying = {};
   int? _selectedThreadId; // sender_id yang dipilih
 
   // Filter
@@ -245,6 +245,7 @@ class _MessagesPageState extends State<MessagesPage> {
         // Reload to get server ID
         await _loadRepliesForThread(senderId);
 
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Reply sent'), backgroundColor: Colors.green),
         );
@@ -254,6 +255,7 @@ class _MessagesPageState extends State<MessagesPage> {
           thread.messages.remove(optimisticReply);
         });
 
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send reply'),
@@ -263,6 +265,7 @@ class _MessagesPageState extends State<MessagesPage> {
       }
     } catch (e) {
       print('❌ Error sending reply: $e');
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
@@ -306,6 +309,7 @@ class _MessagesPageState extends State<MessagesPage> {
 
       _updateUnreadCounts();
 
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Marked as read'),

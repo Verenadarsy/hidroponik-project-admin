@@ -82,10 +82,12 @@ class _LoginPageState extends State<LoginPage> {
           // Simpan data
           await SharedService.saveLoginData(token, user.toJson());
 
+          // ignore: avoid_print
           print('Login berhasil, navigating to dashboard...');
 
           // Navigasi
           Navigator.pushReplacement(
+            // ignore: use_build_context_synchronously
             context,
             MaterialPageRoute(builder: (_) => const DashboardPage()),
           );

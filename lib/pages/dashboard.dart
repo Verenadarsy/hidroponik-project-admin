@@ -60,22 +60,10 @@ class _DashboardPageState extends State<DashboardPage> {
   Color get deepForest => primaryDark;
 
   // Additional Colors// Design System Constants
-  static const double radiusSmall = 12.0;
   static const double radiusMedium = 16.0;
-  static const double radiusLarge = 20.0;
-  static const double radiusXLarge = 24.0;
-
-  static const double spacingXSmall = 8.0;
-  static const double spacingSmall = 12.0;
-  static const double spacingMedium = 16.0;
-  static const double spacingLarge = 24.0;
-  static const double spacingXLarge = 32.0;
-
   static const double fontSmall = 12.0;
-  static const double fontMedium = 14.0;
   static const double fontLarge = 16.0;
   static const double fontXLarge = 20.0;
-  static const double fontTitle = 24.0;
 
   // Gradient colors
   final LinearGradient primaryGradient = const LinearGradient(
@@ -130,10 +118,10 @@ class _DashboardPageState extends State<DashboardPage> {
   };
 
   // Air Quality data
-    Map<String, dynamic>? airQualityData;
-    bool airQualityLoading = false;
-    String aqiStatus = 'Good';
-    Color aqiColor = Colors.green;
+  Map<String, dynamic>? airQualityData;
+  bool airQualityLoading = false;
+  String aqiStatus = 'Good';
+  Color aqiColor = Colors.green;
 
   @override
   void initState() {
@@ -176,6 +164,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     // Redirect ke login setelah 2 detik
     Future.delayed(const Duration(seconds: 2), () {
+      // ignore: use_build_context_synchronously
       Navigator.pushReplacementNamed(context, '/login');
     });
   }
@@ -225,73 +214,105 @@ class _DashboardPageState extends State<DashboardPage> {
 
       if (kDebugMode) {
         print('📥 Dashboard Response Status: ${response.statusCode}');
+        print('📥 Dashboard Response Body: ${response.body}'); // 🔥 TAMBAH INI
       }
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        try {
+          final Map<String, dynamic> data = jsonDecode(response.body);
 
-        if (data['status'] == true) {
-          final stats = data['data'];
+          if (data['status'] == true) {
+            // 🔥 FIX: Safe access dengan null checking
+            final stats = data['data'] as Map<String, dynamic>? ?? {};
 
-          setState(() {
-            // 1. User Statistics
-            activeUsers = stats['users']['active'] ?? 1;
+            // 🔥 Debug: Print structure untuk lihat key apa yang ada
+            if (kDebugMode) {
+              print('📊 Stats keys: ${stats.keys.toList()}');
+            }
 
-            // 2. PERBAIKAN: Ambil jumlah pesan dari stats dashboard
-            // Prioritaskan 'unread', fallback ke 'total_today'
-            totalMessages = stats['messages']?['unread'] ?? 0;
+            setState(() {
+              // 1. User Statistics - dengan safe access
+              final users = stats['users'] as Map<String, dynamic>? ?? {};
+              activeUsers = (users['active'] as int?) ?? 1;
+              // Jika tidak ada 'active', coba 'total'
+              if (activeUsers == 1) {
+                activeUsers = (users['total'] as int?) ?? 1;
+              }
 
-            // 3. Sensor Statistics
-            final sensorStats = stats['sensors'];
-            final sensorReadings = sensorStats['latest_readings'] ?? {};
+              // 2. Messages - dengan safe access
+              final messages = stats['messages'] as Map<String, dynamic>?;
+              totalMessages =
+                  messages?['unread'] as int? ??
+                  messages?['total_today'] as int? ??
+                  0;
 
-            // Update nilai sensor dari latest readings
-            temperature = (sensorReadings['dht_temp']?['value'] ?? 0.0)
-                .toDouble();
-            humidity = (sensorReadings['dht_humid']?['value'] ?? 0.0)
-                .toDouble();
-            phLevel = (sensorReadings['ph']?['value'] ?? 0.0).toDouble();
-            ecLevel = (sensorReadings['ec']?['value'] ?? 0.0).toDouble();
-            lightIntensity = (sensorReadings['ldr']?['value'] ?? 0.0)
-                .toDouble();
-            waterLevel = (sensorReadings['ultrasonic']?['value'] ?? 0.0)
-                .toDouble();
+              // 3. Sensor Statistics - dengan safe access
+              final sensorStats =
+                  stats['sensors'] as Map<String, dynamic>? ?? {};
+              final sensorReadings =
+                  sensorStats['latest_readings'] as Map<String, dynamic>? ?? {};
 
-            // 4. System Status
-            systemOnline = stats['system_status'] == 'online';
+              // Update nilai sensor dengan safe access
+              temperature = _getSensorValue(sensorReadings, 'dht_temp');
+              humidity = _getSensorValue(sensorReadings, 'dht_humid');
+              phLevel = _getSensorValue(sensorReadings, 'ph');
+              ecLevel = _getSensorValue(sensorReadings, 'ec');
+              lightIntensity = _getSensorValue(sensorReadings, 'ldr');
+              waterLevel = _getSensorValue(sensorReadings, 'ultrasonic');
 
-            // 5. Update allSensors untuk backward compatibility
-            _updateAllSensorsFromReadings(sensorReadings);
-          });
-          return;
+              // 4. System Status - dengan safe access
+              final system = stats['system'] as Map<String, dynamic>? ?? {};
+              systemOnline = (system['status'] as String?) == 'online';
+
+              // 5. Update allSensors untuk backward compatibility
+              _updateAllSensorsFromReadings(sensorReadings);
+            });
+            return;
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('❌ JSON Parse Error: $e');
+            print('❌ Full response: ${response.body}');
+          }
         }
       }
 
       // Handle error responses
       if (response.statusCode == 401) {
-        // Unauthorized - token expired
         _handleTokenError('Session expired. Please login again.');
         return;
       } else if (response.statusCode == 403) {
-        // Forbidden - not admin
         _handleTokenError('Access denied. Admin permission required.');
         return;
-      } else if (response.statusCode == 404) {
-        if (kDebugMode) {
-          print('⚠️ Admin endpoint not found (404), using fallback data');
-        }
-        _useFallbackData();
-      } else {
-        if (kDebugMode) {
-          print('⚠️ Unexpected response: ${response.statusCode}');
-        }
-        _useFallbackData();
       }
+
+      // Jika sampai sini, gunakan fallback
+      if (kDebugMode) {
+        print('⚠️ Using fallback data');
+      }
+      _useFallbackData();
     } catch (e) {
       if (kDebugMode) {
         print('❌ Error loading dashboard stats: $e');
       }
       _useFallbackData();
+    }
+  }
+
+  // 🔥 Helper untuk get sensor value dengan safe access
+  double _getSensorValue(Map<String, dynamic> readings, String sensorName) {
+    try {
+      final sensorData = readings[sensorName] as Map<String, dynamic>?;
+      if (sensorData == null) return 0.0;
+
+      final value = sensorData['value'];
+      if (value is int) return value.toDouble();
+      if (value is double) return value;
+      if (value is String) return double.tryParse(value) ?? 0.0;
+
+      return 0.0;
+    } catch (e) {
+      return 0.0;
     }
   }
 
@@ -530,73 +551,72 @@ class _DashboardPageState extends State<DashboardPage> {
     return 'Cloudy';
   }
 
-    Future<void> _fetchAirQualityData() async {
-      setState(() => airQualityLoading = true);
+  Future<void> _fetchAirQualityData() async {
+    setState(() => airQualityLoading = true);
 
-      try {
-        final response = await http.get(
-          Uri.parse('https://api.waqi.info/feed/bandung/?token=demo'),
-        );
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.waqi.info/feed/bandung/?token=demo'),
+      );
 
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-          // ✅ PERBAIKAN: Cek struktur response yang benar
-          if (data['status'] == 'ok' && data['data'] != null) {
-            setState(() {
-              airQualityData = data;
+        // ✅ PERBAIKAN: Cek struktur response yang benar
+        if (data['status'] == 'ok' && data['data'] != null) {
+          setState(() {
+            airQualityData = data;
 
-              // ✅ PERBAIKAN: Ambil AQI langsung sebagai int
-              final aqi = data['data']['aqi'] is int
-                  ? data['data']['aqi']
-                  : int.tryParse(data['data']['aqi'].toString()) ?? 0;
+            // ✅ PERBAIKAN: Ambil AQI langsung sebagai int
+            final aqi = data['data']['aqi'] is int
+                ? data['data']['aqi']
+                : int.tryParse(data['data']['aqi'].toString()) ?? 0;
 
-              // Set status berdasarkan AQI
-              if (aqi <= 50) {
-                aqiStatus = 'Good';
-                aqiColor = Colors.green;
-              } else if (aqi <= 100) {
-                aqiStatus = 'Moderate';
-                aqiColor = Colors.yellow;
-              } else if (aqi <= 150) {
-                aqiStatus = 'Unhealthy for Sensitive';
-                aqiColor = Colors.orange;
-              } else {
-                aqiStatus = 'Unhealthy';
-                aqiColor = Colors.red;
-              }
-
-              airQualityLoading = false;
-            });
-          } else {
-            // ✅ Jika API gagal, gunakan data dummy
-            setState(() {
-              airQualityData = {
-                'data': {'aqi': 55}
-              };
+            // Set status berdasarkan AQI
+            if (aqi <= 50) {
               aqiStatus = 'Good';
               aqiColor = Colors.green;
-              airQualityLoading = false;
-            });
-          }
+            } else if (aqi <= 100) {
+              aqiStatus = 'Moderate';
+              aqiColor = Colors.yellow;
+            } else if (aqi <= 150) {
+              aqiStatus = 'Unhealthy for Sensitive';
+              aqiColor = Colors.orange;
+            } else {
+              aqiStatus = 'Unhealthy';
+              aqiColor = Colors.red;
+            }
+
+            airQualityLoading = false;
+          });
         } else {
-          setState(() => airQualityLoading = false);
+          // ✅ Jika API gagal, gunakan data dummy
+          setState(() {
+            airQualityData = {
+              'data': {'aqi': 55},
+            };
+            aqiStatus = 'Good';
+            aqiColor = Colors.green;
+            airQualityLoading = false;
+          });
         }
-      } catch (e) {
-        if (kDebugMode) print('Air quality error: $e');
-
-        // ✅ FALLBACK: Gunakan data dummy jika error
-        setState(() {
-          airQualityData = {
-            'data': {'aqi': 55}
-          };
-          aqiStatus = 'Good';
-          aqiColor = Colors.green;
-          airQualityLoading = false;
-        });
+      } else {
+        setState(() => airQualityLoading = false);
       }
-    }
+    } catch (e) {
+      if (kDebugMode) print('Air quality error: $e');
 
+      // ✅ FALLBACK: Gunakan data dummy jika error
+      setState(() {
+        airQualityData = {
+          'data': {'aqi': 55},
+        };
+        aqiStatus = 'Good';
+        aqiColor = Colors.green;
+        airQualityLoading = false;
+      });
+    }
+  }
 
   Future<void> _manualRefresh() async {
     setState(() {
@@ -674,7 +694,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                     'Admin Panel',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.white.withOpacity(0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -687,7 +709,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -721,14 +743,14 @@ class _DashboardPageState extends State<DashboardPage> {
                             Icon(
                               Icons.access_time,
                               size: 14,
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Updated ${_getLastUpdateTime()}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white.withOpacity(0.7),
+                                color: Colors.white.withValues(alpha: 0.7),
                               ),
                             ),
                             if (totalMessages > 0) ...[
@@ -798,7 +820,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           border: Border.all(color: Colors.grey.shade200),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -809,55 +831,60 @@ class _DashboardPageState extends State<DashboardPage> {
                                 child: SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                               )
                             : weatherData != null
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
                                     children: [
-                                      Row(
-                                        children: [
-                                          _getWeatherIcon(
-                                            _getCurrentWeatherCode(),
-                                            size: 32,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°C',
-                                                  style: TextStyle(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: textPrimary,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  _getWeatherDesc(_getCurrentWeatherCode()),
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: textSecondary,
-                                                  ),
-                                                ),
-                                              ],
+                                      _getWeatherIcon(
+                                        _getCurrentWeatherCode(),
+                                        size: 32,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°C',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: textPrimary,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            Text(
+                                              _getWeatherDesc(
+                                                _getCurrentWeatherCode(),
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
-                                  )
-                                : Center(
-                                    child: Text(
-                                      'No data',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: textSecondary,
-                                      ),
-                                    ),
                                   ),
+                                ],
+                              )
+                            : Center(
+                                child: Text(
+                                  'No data',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -871,7 +898,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           border: Border.all(color: Colors.grey.shade200),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -882,56 +909,59 @@ class _DashboardPageState extends State<DashboardPage> {
                                 child: SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                               )
                             : airQualityData != null
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
                                     children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.air,
-                                            size: 32,
-                                            color: aqiColor,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${airQualityData!['data']['aqi']}',
-                                                  style: TextStyle(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: aqiColor,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  aqiStatus,
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: textSecondary,
-                                                  ),
-                                                ),
-                                              ],
+                                      Icon(
+                                        Icons.air,
+                                        size: 32,
+                                        color: aqiColor,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${airQualityData!['data']['aqi']}',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: aqiColor,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            Text(
+                                              aqiStatus,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
-                                  )
-                                : Center(
-                                    child: Text(
-                                      'No data',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: textSecondary,
-                                      ),
-                                    ),
                                   ),
+                                ],
+                              )
+                            : Center(
+                                child: Text(
+                                  'No data',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -972,30 +1002,30 @@ class _DashboardPageState extends State<DashboardPage> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                          color: primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: primary.withOpacity(0.3),
+                            color: primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: primary.withValues(alpha: 0.3),
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.refresh_rounded,
-                              size: 14,
-                              color: primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Refresh',
-                              style: TextStyle(
-                                fontSize: fontSmall,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.refresh_rounded,
+                                size: 14,
                                 color: primary,
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Refresh',
+                                style: TextStyle(
+                                  fontSize: fontSmall,
+                                  color: primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -1086,10 +1116,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: primary.withOpacity(0.1),
+                                color: primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: primary.withOpacity(0.3),
+                                  color: primary.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Row(
@@ -1234,7 +1264,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: primary.withOpacity(0.1),
+                                color: primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -1364,16 +1394,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        primary.withOpacity(0.05),
-                        primaryLight.withOpacity(0.05),
+                        primary.withValues(alpha: 0.05),
+                        primaryLight.withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: primary.withOpacity(0.2),
-                    ),
+                    border: Border.all(color: primary.withValues(alpha: 0.2)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -1387,7 +1415,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: primary.withOpacity(0.1),
+                          color: primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -1431,18 +1459,20 @@ class _DashboardPageState extends State<DashboardPage> {
                                 child: Container(
                                   height: 6,
                                   decoration: BoxDecoration(
-                                    color: primary.withOpacity(0.1),
+                                    color: primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(3),
                                   ),
                                   child: FractionallySizedBox(
                                     alignment: Alignment.centerLeft,
                                     widthFactor: systemOnline ? 0.9 : 0.4,
                                     child: Container(
-                                    decoration: BoxDecoration(
-                                      color: systemOnline ? primaryLight : accentRed,
-                                      borderRadius: BorderRadius.circular(3),
+                                      decoration: BoxDecoration(
+                                        color: systemOnline
+                                            ? primaryLight
+                                            : accentRed,
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
                                     ),
-                                  ),
                                   ),
                                 ),
                               ),
@@ -1462,41 +1492,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildRefreshButton() {
-    return InkWell(
-      onTap: _manualRefresh,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: primary,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: primary.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text(
-              'Refresh',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildErrorScreen() {
     return Scaffold(
       backgroundColor: background,
@@ -1511,17 +1506,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                  colors: [accentRed, Colors.orangeAccent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: accentRed.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    colors: [accentRed, Colors.orangeAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentRed.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: Icon(
                   Icons.error_outline_rounded,
@@ -1545,9 +1540,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: primary.withOpacity(0.2),
-                  ),
+                  border: Border.all(color: primary.withValues(alpha: 0.2)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
@@ -1584,7 +1577,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 5,
-                      shadowColor: primary.withOpacity(0.4),
+                      shadowColor: primary.withValues(alpha: 0.4),
                     ),
                     child: const Text(
                       'Back to Login',
@@ -1643,7 +1636,7 @@ class _DashboardPageState extends State<DashboardPage> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1658,18 +1651,15 @@ class _DashboardPageState extends State<DashboardPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 20),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1722,7 +1712,7 @@ class _DashboardPageState extends State<DashboardPage> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1736,7 +1726,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 18),
@@ -1775,37 +1765,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _pollutantInfo(String label, String value, String unit) {
-  return Column(
-    children: [
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          color: Colors.grey.shade600,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        value,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: primary,
-        ),
-      ),
-      Text(
-        unit,
-        style: TextStyle(
-          fontSize: 10,
-          color: primary,
-        ),
-      ),
-    ],
-  );
-}
-
   Widget _actionCard({
     required IconData icon,
     required String title,
@@ -1828,7 +1787,7 @@ class _DashboardPageState extends State<DashboardPage> {
             border: Border.all(color: Colors.grey.shade200),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1842,7 +1801,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(icon, color: color, size: 22),
@@ -1892,19 +1851,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
+                      style: TextStyle(fontSize: 12, color: textSecondary),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: textSecondary,
-              ),
+              Icon(Icons.chevron_right, size: 20, color: textSecondary),
             ],
           ),
         ),

@@ -245,7 +245,7 @@ class _UsersPageState extends State<UsersPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 40,
             spreadRadius: 0,
             offset: const Offset(0, 10),
@@ -264,7 +264,7 @@ class _UsersPageState extends State<UsersPage> {
                 end: Alignment.bottomRight,
                 colors: [
                   isAdmin ? darkGreen : accentBlue,
-                  isAdmin ? mediumGreen : accentBlue.withOpacity(0.8),
+                  isAdmin ? mediumGreen : accentBlue.withValues(alpha: 0.8),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -278,7 +278,7 @@ class _UsersPageState extends State<UsersPage> {
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),
@@ -307,7 +307,7 @@ class _UsersPageState extends State<UsersPage> {
                         email,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -320,7 +320,7 @@ class _UsersPageState extends State<UsersPage> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -340,8 +340,8 @@ class _UsersPageState extends State<UsersPage> {
                             ),
                             decoration: BoxDecoration(
                               color: isActive
-                                  ? Colors.green.withOpacity(0.2)
-                                  : Colors.red.withOpacity(0.2),
+                                  ? Colors.green.withValues(alpha: 0.2)
+                                  : Colors.red.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -550,13 +550,13 @@ class _UsersPageState extends State<UsersPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 5),
           ),
         ],
         border: Border.all(
-          color: isAdmin ? darkGreen.withOpacity(0.2) : borderColor,
+          color: isAdmin ? darkGreen.withValues(alpha: 0.2) : borderColor,
           width: 1.5,
         ),
       ),
@@ -577,8 +577,8 @@ class _UsersPageState extends State<UsersPage> {
                       height: 56,
                       decoration: BoxDecoration(
                         color: isAdmin
-                            ? darkGreen.withOpacity(0.1)
-                            : accentBlue.withOpacity(0.1),
+                            ? darkGreen.withValues(alpha: 0.1)
+                            : accentBlue.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -667,8 +667,8 @@ class _UsersPageState extends State<UsersPage> {
                             ),
                             decoration: BoxDecoration(
                               color: isActive
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.red.withOpacity(0.1),
+                                  ? Colors.green.withValues(alpha: 0.1)
+                                  : Colors.red.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -721,13 +721,13 @@ class _UsersPageState extends State<UsersPage> {
                       user['id'],
                       user['status'] ?? 'active',
                     ),
-                    activeColor: Colors.green,
+                    activeThumbColor: Colors.green,
                     inactiveTrackColor: Colors.grey.shade300,
                     activeTrackColor: Colors.green.shade200,
-                    thumbColor: MaterialStateProperty.resolveWith<Color>((
-                      Set<MaterialState> states,
+                    thumbColor: WidgetStateProperty.resolveWith<Color>((
+                      Set<WidgetState> states,
                     ) {
-                      if (states.contains(MaterialState.selected)) {
+                      if (states.contains(WidgetState.selected)) {
                         return Colors.white;
                       }
                       return Colors.white;
@@ -751,7 +751,7 @@ class _UsersPageState extends State<UsersPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 20,
               offset: const Offset(0, 6),
             ),
@@ -808,14 +808,14 @@ class _UsersPageState extends State<UsersPage> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              darkGreen.withOpacity(0.08),
-              mediumGreen.withOpacity(0.08),
+              darkGreen.withValues(alpha: 0.08),
+              mediumGreen.withValues(alpha: 0.08),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: mediumGreen.withOpacity(0.2)),
+          border: Border.all(color: mediumGreen.withValues(alpha: 0.2)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -861,7 +861,7 @@ class _UsersPageState extends State<UsersPage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 20),
@@ -1034,7 +1034,7 @@ class _UsersPageState extends State<UsersPage> {
           if (isRefreshing)
             LinearProgressIndicator(
               color: mediumGreen,
-              backgroundColor: mediumGreen.withOpacity(0.1),
+              backgroundColor: mediumGreen.withValues(alpha: 0.1),
               minHeight: 2,
             ),
           _buildSearchBar(),
@@ -1050,7 +1050,9 @@ class _UsersPageState extends State<UsersPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _token != null ? _showAddUserDialog : null, // Gunakan versi yang dipilih
+        onPressed: _token != null
+            ? _showAddUserDialog
+            : null, // Gunakan versi yang dipilih
         backgroundColor: darkGreen,
         foregroundColor: Colors.white,
         elevation: 4,
@@ -1071,7 +1073,7 @@ class _UsersPageState extends State<UsersPage> {
     final _passwordController = TextEditingController();
     final _roleController = TextEditingController(text: 'user');
     final _statusController = TextEditingController(text: 'active');
-    
+
     bool _isLoading = false;
     String? _errorMessage;
 
@@ -1106,7 +1108,11 @@ class _UsersPageState extends State<UsersPage> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.error_outline, color: Colors.red, size: 16),
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 16,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -1120,7 +1126,7 @@ class _UsersPageState extends State<UsersPage> {
                             ],
                           ),
                         ),
-                      
+
                       // Name Field
                       TextFormField(
                         controller: _nameController,
@@ -1139,7 +1145,7 @@ class _UsersPageState extends State<UsersPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Email Field
                       TextFormField(
                         controller: _emailController,
@@ -1162,7 +1168,7 @@ class _UsersPageState extends State<UsersPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Password Field
                       TextFormField(
                         controller: _passwordController,
@@ -1185,10 +1191,10 @@ class _UsersPageState extends State<UsersPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Role Dropdown
                       DropdownButtonFormField<String>(
-                        value: _roleController.text,
+                        initialValue: _roleController.text,
                         decoration: InputDecoration(
                           labelText: 'Role',
                           prefixIcon: Icon(Icons.work, color: mediumGreen),
@@ -1197,10 +1203,12 @@ class _UsersPageState extends State<UsersPage> {
                           ),
                         ),
                         items: ['user', 'admin']
-                            .map((role) => DropdownMenuItem(
-                                  value: role,
-                                  child: Text(role.toUpperCase()),
-                                ))
+                            .map(
+                              (role) => DropdownMenuItem(
+                                value: role,
+                                child: Text(role.toUpperCase()),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           setState(() {
@@ -1209,10 +1217,10 @@ class _UsersPageState extends State<UsersPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Status Dropdown
                       DropdownButtonFormField<String>(
-                        value: _statusController.text,
+                        initialValue: _statusController.text,
                         decoration: InputDecoration(
                           labelText: 'Status',
                           prefixIcon: Icon(Icons.toggle_on, color: mediumGreen),
@@ -1221,10 +1229,12 @@ class _UsersPageState extends State<UsersPage> {
                           ),
                         ),
                         items: ['active', 'inactive']
-                            .map((status) => DropdownMenuItem(
-                                  value: status,
-                                  child: Text(status.toUpperCase()),
-                                ))
+                            .map(
+                              (status) => DropdownMenuItem(
+                                value: status,
+                                child: Text(status.toUpperCase()),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           setState(() {
@@ -1250,7 +1260,7 @@ class _UsersPageState extends State<UsersPage> {
                               _isLoading = true;
                               _errorMessage = null;
                             });
-                            
+
                             try {
                               final Map<String, dynamic> userData = {
                                 'name': _nameController.text.trim(),
@@ -1259,29 +1269,34 @@ class _UsersPageState extends State<UsersPage> {
                                 'role': _roleController.text,
                                 'status': _statusController.text,
                               };
-                              
+
                               final response = await ApiService.createUser(
                                 token: _token!,
                                 userData: userData,
                               );
-                              
+
                               if (response['status'] == true) {
                                 if (mounted) {
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(response['message'] ?? 'User created successfully'),
+                                      content: Text(
+                                        response['message'] ??
+                                            'User created successfully',
+                                      ),
                                       backgroundColor: Colors.green,
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
-                                  
+
                                   // Refresh user list
                                   _loadUsers(page: 1);
                                 }
                               } else {
                                 setState(() {
-                                  _errorMessage = response['message'] ?? 'Failed to create user';
+                                  _errorMessage =
+                                      response['message'] ??
+                                      'Failed to create user';
                                   _isLoading = false;
                                 });
                               }
@@ -1293,9 +1308,7 @@ class _UsersPageState extends State<UsersPage> {
                             }
                           }
                         },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: darkGreen,
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: darkGreen),
                   child: _isLoading
                       ? SizedBox(
                           height: 20,
