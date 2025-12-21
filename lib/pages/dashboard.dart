@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:fl_chart/fl_chart.dart';
 import '../services/shared.dart';
 import '../models/sensor_model.dart';
 import 'user.dart';
@@ -11,6 +14,8 @@ import 'analytics.dart';
 import 'setting.dart';
 import 'log.dart';
 import 'messages.dart';
+import 'splash_screen.dart'; // Import splash screen
+import 'login.dart'; // Import login page
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -20,91 +25,46 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Enhanced Color palette - lebih bold dan modern
-  final Color primary = const Color(0xFF2E7D32);
-  final Color primaryLight = const Color(0xFF4CAF50);
-  final Color primaryDark = const Color(0xFF1B5E20);
+  // Nature-inspired color palette (SAMA dengan user dashboard)
+  final Color deepGreen = const Color(0xFF1B4332);
+  final Color forestGreen = const Color(0xFF2D6A4F);
+  final Color leafGreen = const Color(0xFF52B788);
+  final Color mintGreen = const Color(0xFF95D5B2);
+  final Color waterBlue = const Color(0xFF40916C);
+  final Color sunlightOrange = const Color(0xFFF48C06);
+  final Color soilBrown = const Color(0xFF6F4E37);
+  final Color bgGradientStart = const Color(0xFFF8FDF9);
+  final Color bgGradientEnd = const Color(0xFFE8F4EA);
 
-  // Neutral Colors
-  final Color background = const Color(0xFFF5F7FA);
-  final Color surface = Colors.white;
-  final Color textPrimary = const Color(0xFF1A1A1A);
-  final Color textSecondary = const Color(0xFF6B7280);
+  // Additional admin-specific colors
+  final Color adminBlue = const Color(0xFF2196F3);
+  final Color adminPurple = const Color(0xFF9C27B0);
+  final Color adminRed = const Color(0xFFEF5350);
 
-  // Accent Colors - minimal usage
-  final Color accentBlue = const Color(0xFF2196F3);
-  final Color accentOrange = const Color(0xFFFF9800);
-  final Color accentRed = const Color(0xFFEF5350);
-  final Color accentPurple = const Color(0xFF9C27B0);
-
-  // Sensor Colors
-  final Color tempColor = const Color(0xFFEF5350);
-  final Color humidColor = const Color(0xFF42A5F5);
-  final Color phColor = const Color(0xFF66BB6A);
-  final Color ecColor = const Color(0xFFFFB74D);
-  final Color lightColor = const Color(0xFFFFA726);
-  final Color waterColor = const Color(0xFF29B6F6);
-
-  // Backward compatibility getters
-  Color get vibrantGreen => primary;
-  Color get limeAccent => primaryLight;
-  Color get mintCream => background;
-  Color get darkTeal => primaryDark;
-  Color get goldAccent => accentOrange;
-  Color get coralRed => accentRed;
-  Color get royalPurple => accentPurple;
-  Color get steelBlue => accentBlue;
-  Color get darkSlate => textPrimary;
-  Color get darkGreen => primaryDark;
-  Color get mediumGreen => primary;
-  Color get deepForest => primaryDark;
-
-  // Additional Colors// Design System Constants
-  static const double radiusMedium = 16.0;
-  static const double fontSmall = 12.0;
-  static const double fontLarge = 16.0;
-  static const double fontXLarge = 20.0;
-
-  // Gradient colors
-  final LinearGradient primaryGradient = const LinearGradient(
-    colors: [Color(0xFF1B4D3E), Color(0xFF2E8B57)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  final LinearGradient accentGradient = const LinearGradient(
-    colors: [Color(0xFF9ACD32), Color(0xFFFFFF00)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  // Weather colors
-  final Color weatherBlue = const Color(0xFFA8D8EA);
-  final Color weatherLightBlue = const Color(0xFF7FC4DD);
-  final Color weatherSun = const Color(0xFFFDB813);
-  final Color weatherCloud = const Color(0xFFA8D8EA);
-
-  // API endpoint - PASTIKAN SAMA DENGAN BACKEND
+  // API endpoint
   static const String baseUrl = 'http://localhost:5000';
 
   // State variables
-  List<SensorData> allSensors = [];
-  int activeUsers = 0;
-  int totalMessages = 0;
-  bool systemOnline = true;
-  bool isLoading = true;
-  bool hasError = false;
-  String errorMessage = '';
+  int _selectedIndex = 0;
   Timer? _refreshTimer;
   String? _token;
 
-  // Statistik dari sensor data
+  // Sensor data
   double temperature = 0;
   double humidity = 0;
   double phLevel = 0;
   double ecLevel = 0;
   double lightIntensity = 0;
   double waterLevel = 0;
+  List<SensorData> allSensors = [];
+
+  // Admin stats
+  int activeUsers = 0;
+  int totalMessages = 0;
+  bool systemOnline = true;
+  bool isLoading = true;
+  bool hasError = false;
+  String errorMessage = '';
 
   // Weather data
   Map<String, dynamic>? weatherData;
@@ -149,8 +109,8 @@ class _DashboardPageState extends State<DashboardPage> {
     _fetchWeatherData();
     _fetchAirQualityData();
 
-    // Setup auto refresh setiap 10 detik
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+    // Setup auto refresh setiap 5 detik (sama seperti user dashboard)
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       _loadAllData();
     });
   }
@@ -214,7 +174,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       if (kDebugMode) {
         print('📥 Dashboard Response Status: ${response.statusCode}');
-        print('📥 Dashboard Response Body: ${response.body}'); // 🔥 TAMBAH INI
+        print('📥 Dashboard Response Body: ${response.body}');
       }
 
       if (response.statusCode == 200) {
@@ -222,37 +182,34 @@ class _DashboardPageState extends State<DashboardPage> {
           final Map<String, dynamic> data = jsonDecode(response.body);
 
           if (data['status'] == true) {
-            // 🔥 FIX: Safe access dengan null checking
             final stats = data['data'] as Map<String, dynamic>? ?? {};
 
-            // 🔥 Debug: Print structure untuk lihat key apa yang ada
             if (kDebugMode) {
               print('📊 Stats keys: ${stats.keys.toList()}');
             }
 
             setState(() {
-              // 1. User Statistics - dengan safe access
+              // 1. User Statistics
               final users = stats['users'] as Map<String, dynamic>? ?? {};
               activeUsers = (users['active'] as int?) ?? 1;
-              // Jika tidak ada 'active', coba 'total'
               if (activeUsers == 1) {
                 activeUsers = (users['total'] as int?) ?? 1;
               }
 
-              // 2. Messages - dengan safe access
+              // 2. Messages
               final messages = stats['messages'] as Map<String, dynamic>?;
               totalMessages =
                   messages?['unread'] as int? ??
                   messages?['total_today'] as int? ??
                   0;
 
-              // 3. Sensor Statistics - dengan safe access
+              // 3. Sensor Statistics
               final sensorStats =
                   stats['sensors'] as Map<String, dynamic>? ?? {};
               final sensorReadings =
                   sensorStats['latest_readings'] as Map<String, dynamic>? ?? {};
 
-              // Update nilai sensor dengan safe access
+              // Update nilai sensor
               temperature = _getSensorValue(sensorReadings, 'dht_temp');
               humidity = _getSensorValue(sensorReadings, 'dht_humid');
               phLevel = _getSensorValue(sensorReadings, 'ph');
@@ -260,11 +217,11 @@ class _DashboardPageState extends State<DashboardPage> {
               lightIntensity = _getSensorValue(sensorReadings, 'ldr');
               waterLevel = _getSensorValue(sensorReadings, 'ultrasonic');
 
-              // 4. System Status - dengan safe access
+              // 4. System Status
               final system = stats['system'] as Map<String, dynamic>? ?? {};
               systemOnline = (system['status'] as String?) == 'online';
 
-              // 5. Update allSensors untuk backward compatibility
+              // 5. Update allSensors
               _updateAllSensorsFromReadings(sensorReadings);
             });
             return;
@@ -286,7 +243,7 @@ class _DashboardPageState extends State<DashboardPage> {
         return;
       }
 
-      // Jika sampai sini, gunakan fallback
+      // Fallback
       if (kDebugMode) {
         print('⚠️ Using fallback data');
       }
@@ -299,7 +256,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // 🔥 Helper untuk get sensor value dengan safe access
   double _getSensorValue(Map<String, dynamic> readings, String sensorName) {
     try {
       final sensorData = readings[sensorName] as Map<String, dynamic>?;
@@ -317,10 +273,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _useFallbackData() {
-    // Fallback ke data default jika endpoint admin belum tersedia
     setState(() {
-      activeUsers = 1; // Hanya admin
-      totalMessages = 0; // Belum ada messages
+      activeUsers = 1;
+      totalMessages = 0;
       systemOnline = allSensors.isNotEmpty;
     });
   }
@@ -358,7 +313,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _loadSensorDataFallback() async {
-    // Fallback method jika endpoint admin tidak tersedia
     try {
       final url = Uri.parse('$baseUrl/api/get_sensor_data');
       final response = await http.get(
@@ -379,7 +333,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
         setState(() {
           allSensors = sensors;
-          // Update individual values
           temperature = _getLatestValue('dht_temp');
           humidity = _getLatestValue('dht_humid');
           phLevel = _getLatestValue('ph');
@@ -405,7 +358,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   int _getTotalSensors() {
-    // Jika ada data sensor langsung, hitung dari nilai yang ada
     int count = 0;
     if (temperature > 0) count++;
     if (humidity > 0) count++;
@@ -414,7 +366,6 @@ class _DashboardPageState extends State<DashboardPage> {
     if (lightIntensity > 0) count++;
     if (waterLevel > 0) count++;
 
-    // Jika masih 0, coba dari allSensors
     if (count == 0 && allSensors.isNotEmpty) {
       final uniqueSensors = allSensors.map((e) => e.sensorName).toSet();
       return uniqueSensors.length;
@@ -431,8 +382,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Color _getSystemStatusColor() {
     if (isLoading) return Colors.grey;
-    if (hasError) return accentRed;
-    return systemOnline ? primaryLight : accentRed;
+    if (hasError) return adminRed;
+    return systemOnline ? leafGreen : adminRed;
   }
 
   String _getLastUpdateTime() {
@@ -457,7 +408,41 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // Method untuk fetch weather data
+    Widget _pollutantInfo(String label, String value, String unit) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: deepGreen,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          unit,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey.shade500,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _fetchWeatherData() async {
     setState(() => weatherLoading = true);
 
@@ -493,7 +478,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return cuacaList[0][0]['weather'] as int?;
   }
 
-  Widget _getWeatherIcon(int? code, {double size = 28}) {
+  Widget _getWeatherIcon(int? code, {double size = 32}) {
     if (code == null) return Icon(Icons.cloud, size: size, color: Colors.grey);
 
     // Mostly Clear - matahari + awan
@@ -507,12 +492,20 @@ class _DashboardPageState extends State<DashboardPage> {
             Positioned(
               left: 0,
               top: size * 0.1,
-              child: Icon(Icons.wb_sunny, size: size * 0.7, color: weatherSun),
+              child: Icon(
+                Icons.wb_sunny,
+                size: size * 0.7,
+                color: const Color(0xFFFDB813),
+              ),
             ),
             Positioned(
               right: 0,
               bottom: size * 0.1,
-              child: Icon(Icons.cloud, size: size * 0.5, color: weatherCloud),
+              child: Icon(
+                Icons.cloud,
+                size: size * 0.5,
+                color: const Color(0xFFA8D8EA),
+              ),
             ),
           ],
         ),
@@ -520,11 +513,11 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     IconData iconData;
-    Color iconColor = weatherCloud;
+    Color iconColor = const Color(0xFFA8D8EA);
 
     if (code == 0) {
       iconData = Icons.wb_sunny;
-      iconColor = weatherSun;
+      iconColor = const Color(0xFFFDB813);
     } else if (code == 2) {
       iconData = Icons.cloud_queue;
     } else if (code == 3) {
@@ -551,7 +544,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return 'Cloudy';
   }
 
-  Future<void> _fetchAirQualityData() async {
+    Future<void> _fetchAirQualityData() async {
     setState(() => airQualityLoading = true);
 
     try {
@@ -562,17 +555,14 @@ class _DashboardPageState extends State<DashboardPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // ✅ PERBAIKAN: Cek struktur response yang benar
         if (data['status'] == 'ok' && data['data'] != null) {
           setState(() {
             airQualityData = data;
 
-            // ✅ PERBAIKAN: Ambil AQI langsung sebagai int
             final aqi = data['data']['aqi'] is int
                 ? data['data']['aqi']
                 : int.tryParse(data['data']['aqi'].toString()) ?? 0;
 
-            // Set status berdasarkan AQI
             if (aqi <= 50) {
               aqiStatus = 'Good';
               aqiColor = Colors.green;
@@ -590,10 +580,14 @@ class _DashboardPageState extends State<DashboardPage> {
             airQualityLoading = false;
           });
         } else {
-          // ✅ Jika API gagal, gunakan data dummy
+          // TAMBAHKAN DATA POLLUTANT DI SINI
           setState(() {
             airQualityData = {
               'data': {'aqi': 55},
+              'aqi': 55,
+              'pm25': 12.5,
+              'pm10': 25.3,
+              'o3': 45.8,
             };
             aqiStatus = 'Good';
             aqiColor = Colors.green;
@@ -606,10 +600,14 @@ class _DashboardPageState extends State<DashboardPage> {
     } catch (e) {
       if (kDebugMode) print('Air quality error: $e');
 
-      // ✅ FALLBACK: Gunakan data dummy jika error
+      // TAMBAHKAN DATA POLLUTANT DI SINI JUGA
       setState(() {
         airQualityData = {
           'data': {'aqi': 55},
+          'aqi': 55,
+          'pm25': 12.5,
+          'pm10': 25.3,
+          'o3': 45.8,
         };
         aqiStatus = 'Good';
         aqiColor = Colors.green;
@@ -623,1144 +621,1576 @@ class _DashboardPageState extends State<DashboardPage> {
       isLoading = true;
       hasError = false;
     });
+    await Future.delayed(const Duration(milliseconds: 500));
     await _loadAllData();
+  }
+
+  Future<void> _logout() async {
+    // Show confirmation dialog
+    final bool confirm = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.logout_rounded,
+                color: adminRed,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Logout',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: deepGreen,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to logout from admin account?',
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey.shade700,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: adminRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                elevation: 2,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!confirm) return;
+
+
+    // Tampilkan loading sebelum redirect
+    setState(() {
+      isLoading = true;
+    });
+
+    // Tunggu sebentar untuk effect
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // Navigate ke SplashScreen dengan transition yang smooth
+    // ignore: use_build_context_synchronously
+    Navigator.pushAndRemoveUntil(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const SplashScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+      (route) => false,
+    );
+  }
+
+  // Navigation handling
+  final List<Widget> _pages = [
+    // Will be filled with _buildHomePage
+    const SizedBox(),
+    const UsersPage(),
+    const SensorDetailPage(sensorName: 'dht_temp', displayName: 'Temperature'),
+    const AnalyticsPage(),
+    const MessagesPage(),
+    const SettingsPage(),
+    const LogsPage(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Tampilkan error screen jika ada error
+    // Tampilkan splash screen jika masih loading dan belum ada error
+    if (isLoading && !hasError) {
+      return const SplashScreen();
+    }
+
     if (hasError && !isLoading) {
       return _buildErrorScreen();
     }
 
     return Scaffold(
-      backgroundColor: background,
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: FloatingActionButton.small(
-        onPressed: _manualRefresh,
-        backgroundColor: primary,
-        child: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Icon(Icons.refresh, size: 20),
-      ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Enhanced App bar dengan gradient dan efek glassmorphism
-          SliverAppBar(
-            expandedHeight: 160, // KURANGI dari 220
-            floating: false,
-            pinned: true,
-            backgroundColor: primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  color: primary, // HAPUS gradient
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24), // KURANGI dari 40
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'HydroGrow Dashboard',
-                                    style: TextStyle(
-                                      fontSize: 24, // KONSISTEN
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Admin Panel',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Status badge - lebih kecil
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: _getSystemStatusColor(),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _getSystemStatus(),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: 14,
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Updated ${_getLastUpdateTime()}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white.withValues(alpha: 0.7),
-                              ),
-                            ),
-                            if (totalMessages > 0) ...[
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: accentRed,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.notifications,
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '$totalMessages',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            elevation: 4, // KURANGI dari 15
-            shadowColor: Colors.black26,
+      backgroundColor: Colors.transparent,
+      extendBody: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgGradientStart, bgGradientEnd],
+            stops: const [0.0, 1.0],
           ),
-          // Main content
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // ✅ WEATHER CARD - DI ATAS SYSTEM OVERVIEW
-                Row(
-                  children: [
-                    // Weather Card - Compact
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: surface,
-                          borderRadius: BorderRadius.circular(radiusMedium),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: weatherLoading
-                            ? const Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              )
-                            : weatherData != null
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      _getWeatherIcon(
-                                        _getCurrentWeatherCode(),
-                                        size: 32,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°C',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: textPrimary,
-                                              ),
-                                            ),
-                                            Text(
-                                              _getWeatherDesc(
-                                                _getCurrentWeatherCode(),
-                                              ),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: textSecondary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            : Center(
-                                child: Text(
-                                  'No data',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: textSecondary,
-                                  ),
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Air Quality Card - Compact
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: surface,
-                          borderRadius: BorderRadius.circular(radiusMedium),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: airQualityLoading
-                            ? const Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              )
-                            : airQualityData != null
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.air,
-                                        size: 32,
-                                        color: aqiColor,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${airQualityData!['data']['aqi']}',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: aqiColor,
-                                              ),
-                                            ),
-                                            Text(
-                                              aqiStatus,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: textSecondary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            : Center(
-                                child: Text(
-                                  'No data',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: textSecondary,
-                                  ),
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24), // SPACING KONSISTEN
-
-                const SizedBox(height: 24),
-
-                // Stats cards title
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 4,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: primary,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'System Overview',
-                        style: TextStyle(
-                          fontSize: fontXLarge,
-                          fontWeight: FontWeight.w700,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: _manualRefresh,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: primary.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.refresh_rounded,
-                                size: 14,
-                                color: primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Refresh',
-                                style: TextStyle(
-                                  fontSize: fontSmall,
-                                  color: primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Stats grid
-                GridView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.15,
-                  ),
-                  children: [
-                    _statCard(
-                      title: 'Active Users',
-                      value: activeUsers.toString(),
-                      icon: Icons.people_alt_rounded,
-                      color: accentBlue,
-                      subtitle: activeUsers > 1
-                          ? '$activeUsers users'
-                          : 'Admin only',
-                    ),
-                    _statCard(
-                      title: 'Total Sensors',
-                      value: _getTotalSensors().toString(),
-                      icon: Icons.sensors_rounded,
-                      color: primary,
-                      subtitle: '${allSensors.length} readings',
-                    ),
-                    _statCard(
-                      title: 'Messages',
-                      value: totalMessages.toString(),
-                      icon: Icons.message_rounded,
-                      color: accentPurple,
-                      subtitle: totalMessages > 0
-                          ? '$totalMessages new'
-                          : 'No new messages',
-                    ),
-                    _statCard(
-                      title: 'System Status',
-                      value: _getSystemStatus(),
-                      icon: Icons.wifi_tethering_rounded,
-                      color: _getSystemStatusColor(),
-                      subtitle: systemOnline
-                          ? 'All systems go'
-                          : 'Check system',
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 32),
-
-                // Live Sensor Data section
-                Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: primaryLight,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Live Sensor Data',
-                              style: TextStyle(
-                                fontSize: fontXLarge,
-                                fontWeight: FontWeight.w800,
-                                color: textPrimary,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: primary.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.schedule_rounded,
-                                    size: 14,
-                                    color: primary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Real-time',
-                                    style: TextStyle(
-                                      fontSize: fontSmall,
-                                      color: primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Sensor Grid dengan card lebih menarik
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.1,
-                        children: [
-                          _sensorCard(
-                            title: 'Temperature',
-                            value: '${temperature.toStringAsFixed(1)}°C',
-                            icon: Icons.thermostat_auto_rounded,
-                            color: Colors.redAccent,
-                            unit: 'Celsius',
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.redAccent.withValues(alpha: 0.9),
-                                Colors.orangeAccent,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          _sensorCard(
-                            title: 'Humidity',
-                            value: '${humidity.toStringAsFixed(1)}%',
-                            icon: Icons.water_drop_rounded,
-                            color: Colors.blueAccent,
-                            unit: 'Percent',
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.blueAccent.withValues(alpha: 0.9),
-                                Colors.lightBlueAccent,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          _sensorCard(
-                            title: 'pH Level',
-                            value: phLevel.toStringAsFixed(2),
-                            icon: Icons.science_rounded,
-                            color: phColor,
-                            unit: 'pH Scale',
-                            gradient: const LinearGradient(colors: []),
-                          ),
-                          _sensorCard(
-                            title: 'EC Level',
-                            value: ecLevel.toStringAsFixed(2),
-                            icon: Icons.bolt_rounded,
-                            color: ecColor,
-                            unit: 'mS/cm',
-                            gradient: const LinearGradient(colors: []),
-                          ),
-                          _sensorCard(
-                            title: 'Light',
-                            value: '${lightIntensity.toStringAsFixed(0)} Lux',
-                            icon: Icons.light_mode_rounded,
-                            color: Colors.amber,
-                            unit: 'Lux',
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.amber.withValues(alpha: 0.9),
-                                Colors.yellowAccent,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          _sensorCard(
-                            title: 'Water Level',
-                            value: '${waterLevel.toStringAsFixed(0)}%',
-                            icon: Icons.waves_rounded,
-                            color: waterColor,
-                            unit: 'Percent',
-                            gradient: const LinearGradient(colors: []),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Quick Actions section
-                Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: primaryLight,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Quick Actions',
-                              style: TextStyle(
-                                fontSize: fontXLarge,
-                                fontWeight: FontWeight.w800,
-                                color: textPrimary,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${_getTotalSensors()} Available',
-                                style: TextStyle(
-                                  fontSize: fontSmall,
-                                  color: primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Quick actions dengan card modern
-                      Column(
-                        children: [
-                          _actionCard(
-                            icon: Icons.people_outline_rounded,
-                            title: 'User Management',
-                            subtitle: 'Manage system users & permissions',
-                            color: accentBlue,
-                            gradient: const LinearGradient(colors: []),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const UsersPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _actionCard(
-                            icon: Icons.sensors_rounded,
-                            title: 'Sensor Dashboard',
-                            subtitle: 'Detailed sensor analytics & control',
-                            color: primary,
-                            gradient: const LinearGradient(colors: []),
-                            badgeCount: _getTotalSensors(),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => SensorDetailPage(
-                                    sensorName: 'dht_temp',
-                                    displayName: 'Temperature',
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _actionCard(
-                            icon: Icons.analytics_rounded,
-                            title: 'Analytics Center',
-                            subtitle: 'Performance reports & insights',
-                            color: accentPurple,
-                            gradient: const LinearGradient(colors: []),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const AnalyticsPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _actionCard(
-                            icon: Icons.chat_bubble_outline_rounded,
-                            title: 'Message Center',
-                            subtitle: 'View & respond to user messages',
-                            color: Colors.teal,
-                            gradient: const LinearGradient(colors: []),
-                            badgeCount: totalMessages,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const MessagesPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _actionCard(
-                            icon: Icons.settings_rounded,
-                            title: 'System Settings',
-                            subtitle: 'Configure system parameters',
-                            color: accentOrange,
-                            gradient: const LinearGradient(colors: []),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const SettingsPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _actionCard(
-                            icon: Icons.history_toggle_off_rounded,
-                            title: 'Activity Log',
-                            subtitle: 'System events & audit trail',
-                            color: Colors.grey.shade700,
-                            gradient: const LinearGradient(colors: []),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const LogsPage(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // System Info card dengan glassmorphism effect
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        primary.withValues(alpha: 0.05),
-                        primaryLight.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: primary.withValues(alpha: 0.2)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          isLoading
-                              ? Icons.sync_rounded
-                              : Icons.info_outline_rounded,
-                          color: primary,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'System Information',
-                              style: TextStyle(
-                                fontSize: fontLarge,
-                                fontWeight: FontWeight.bold,
-                                color: textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              isLoading
-                                  ? 'Fetching live data from sensors...'
-                                  : '${allSensors.length} sensor readings • '
-                                        '${_getTotalSensors()} active sensors • '
-                                        '$totalMessages new messages\n'
-                                        'Last updated: ${_getLastUpdateTime()}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey.shade700,
-                                height: 1.6,
-                              ),
-                            ),
-                            if (!isLoading)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Container(
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                  child: FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: systemOnline ? 0.9 : 0.4,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: systemOnline
-                                            ? primaryLight
-                                            : accentRed,
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-              ]),
-            ),
-          ),
-        ],
+        ),
+        child: _selectedIndex == 0 ? _buildHomePage() : _pages[_selectedIndex],
       ),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildErrorScreen() {
-    return Scaffold(
-      backgroundColor: background,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [accentRed, Colors.orangeAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accentRed.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.error_outline_rounded,
-                  size: 64,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Oops! Something went wrong',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: primary.withValues(alpha: 0.2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  errorMessage,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
+  Widget _buildBottomNav() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Container(
+        height: 76,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(38),
+          boxShadow: [
+            BoxShadow(
+              color: deepGreen.withValues(alpha: 0.12),
+              blurRadius: 40,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(38),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  width: 1.2,
                 ),
               ),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
                 children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 5,
-                      shadowColor: primary.withValues(alpha: 0.4),
-                    ),
-                    child: const Text(
-                      'Back to Login',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _manualRefresh,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: primary, width: 2),
-                      ),
-                      elevation: 3,
-                    ),
-                    child: Text(
-                      'Try Again',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: primary,
-                      ),
-                    ),
-                  ),
+                  _navItem(Icons.home_rounded, 0),
+                  _navItem(Icons.people_rounded, 1),
+                  _navItem(Icons.sensors_rounded, 2),
+                  _navItem(Icons.analytics_rounded, 3),
+                  _navItem(Icons.message_rounded, 4),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _statCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required String subtitle,
-  }) {
+  Widget _navItem(IconData icon, int index) {
+    final selected = index == _selectedIndex;
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onItemTapped(index),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsets.symmetric(
+              horizontal: selected ? 22 : 14,
+              vertical: 12,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              gradient: selected
+                  ? LinearGradient(
+                      colors: [
+                        leafGreen.withValues(alpha: 0.95),
+                        waterBlue.withValues(alpha: 0.95),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: selected ? null : Colors.white.withValues(alpha: 0.9),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: leafGreen.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: selected ? 22 : 20,
+                  color: selected ? Colors.white : Colors.grey.shade700,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getNavLabel(index),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: selected ? Colors.white : Colors.grey.shade600,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getNavLabel(int index) {
+    switch (index) {
+      case 0:
+        return 'Home';
+      case 1:
+        return 'Users';
+      case 2:
+        return 'Sensors';
+      case 3:
+        return 'Analytics';
+      case 4:
+        return 'Messages';
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildHomePage() {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(child: _buildHeader()),
+        SliverToBoxAdapter(child: _buildContent()),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(radiusMedium),
-        border: Border.all(color: Colors.grey.shade200),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [deepGreen, forestGreen],
+          stops: const [0.0, 0.8],
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: deepGreen.withValues(alpha: 0.4),
+            blurRadius: 40,
+            spreadRadius: 2,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // TOP BAR dengan Refresh Button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.admin_panel_settings_rounded,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "HydroGrow Admin",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 24,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            "System Administration",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      // Refresh Button
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: GestureDetector(
+                          onTap: _manualRefresh,
+                          child: Icon(
+                            Icons.refresh_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Notification Button
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            const Icon(
+                              Icons.notifications_outlined,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            if (totalMessages > 0)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: sunlightOrange,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // STATUS CARD
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.12),
+                      Colors.white.withValues(alpha: 0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: leafGreen.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.admin_panel_settings_rounded,
+                                  color: leafGreen,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                "Admin Dashboard",
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            systemOnline ? "All Systems Operational" : "System Maintenance",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            systemOnline
+                                ? "Monitoring ${_getTotalSensors()} sensors & $activeUsers users"
+                                : "System checks in progress",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  systemOnline ? leafGreen : adminRed,
+                                  systemOnline ? waterBlue : adminRed.withOpacity(0.8),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (systemOnline ? leafGreen : adminRed)
+                                      .withValues(alpha: 0.4),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  systemOnline ? "System Online" : "System Offline",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Icon(
+                      systemOnline ? Icons.verified_rounded : Icons.warning_rounded,
+                      color: Colors.white,
+                      size: 80,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 20),
+          // Weather Card
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFA8D8EA).withValues(alpha: 0.2),
+                  const Color(0xFF7FC4DD).withValues(alpha: 0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
                 ),
-                child: Text(
-                  subtitle.split(' ').last, // ambil kata terakhir aja
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: color,
+              ],
+            ),
+            child: weatherLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: leafGreen,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Loading weather...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: deepGreen,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  )
+                : weatherData != null
+                    ? Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: _getWeatherIcon(
+                              _getCurrentWeatherCode(),
+                              size: 40,
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 16,
+                                      color: deepGreen.withValues(alpha: 0.7),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      selectedCity,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: deepGreen.withValues(alpha: 0.8),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _getWeatherDesc(_getCurrentWeatherCode()),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: deepGreen,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Current weather conditions',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°',
+                                style: TextStyle(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w800,
+                                  color: deepGreen,
+                                  height: 1,
+                                  letterSpacing: -1,
+                                ),
+                              ),
+                              Text(
+                                'Celsius',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.cloud_off,
+                            color: Colors.grey.shade400,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Weather unavailable',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Air Quality Card
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  aqiColor.withValues(alpha: 0.2),
+                  aqiColor.withValues(alpha: 0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: airQualityLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: leafGreen,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Loading air quality...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: deepGreen,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  )
+                : airQualityData != null
+                    ? Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.air_rounded,
+                                  size: 40,
+                                  color: aqiColor,
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.location_on,
+                                          size: 16,
+                                          color:
+                                              deepGreen.withValues(alpha: 0.7),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Air Quality',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color:
+                                                deepGreen.withValues(alpha: 0.8),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      aqiStatus,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: deepGreen,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Real-time monitoring',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    '${airQualityData!['data']['aqi'] ?? airQualityData!['aqi']}',
+                                    style: TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.w800,
+                                      color: aqiColor,
+                                      height: 1,
+                                      letterSpacing: -1,
+                                    ),
+                                  ),
+                                  Text(
+                                    'AQI',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          // ======= TAMBAHKAN INI =======
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _pollutantInfo(
+                                  'PM2.5',
+                                  '${airQualityData!['pm25'] ?? '--'}',
+                                  'μg/m³',
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.grey.shade300,
+                                ),
+                                _pollutantInfo(
+                                  'PM10',
+                                  '${airQualityData!['pm10'] ?? '--'}',
+                                  'μg/m³',
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.grey.shade300,
+                                ),
+                                _pollutantInfo(
+                                  'O₃',
+                                  '${airQualityData!['o3'] ?? '--'}',
+                                  'ppb',
+                                ),
+                              ],
+                            ),
+                          ),
+                          // ======= SAMPAI SINI =======
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.air_rounded,
+                            color: Colors.grey.shade400,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Air quality unavailable',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // System Overview Title
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [leafGreen, waterBlue],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+                const SizedBox(width: 12),
+                Text(
+                  "System Overview",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: deepGreen,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Stats Grid - Warna lebih subtle
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.1,
+            ),
+            children: [
+              _statCard(
+                Icons.people_rounded,
+                "Active Users",
+                activeUsers.toString(),
+                iconColor: adminBlue,
+                iconBg: adminBlue.withValues(alpha: 0.1),
+              ),
+              _statCard(
+                Icons.sensors_rounded,
+                "Total Sensors",
+                _getTotalSensors().toString(),
+                iconColor: leafGreen,
+                iconBg: leafGreen.withValues(alpha: 0.1),
+              ),
+              _statCard(
+                Icons.message_rounded,
+                "Messages",
+                totalMessages.toString(),
+                iconColor: adminPurple,
+                iconBg: adminPurple.withValues(alpha: 0.1),
+              ),
+              _statCard(
+                Icons.wifi_tethering_rounded,
+                "System Status",
+                _getSystemStatus(),
+                iconColor: _getSystemStatusColor(),
+                iconBg: _getSystemStatusColor().withValues(alpha: 0.1),
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
+
+          const SizedBox(height: 40),
+
+          // Live Sensor Data Title
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [leafGreen, waterBlue],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Live Sensor Data",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: deepGreen,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const Text(
+                      "Real-time monitoring",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: textSecondary,
+
+          // Sensor Data Grid
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.1,
+            ),
+            children: [
+              _quickStat(
+                Icons.thermostat_rounded,
+                "Temperature",
+                "${temperature.toStringAsFixed(1)}°C",
+                gradient: LinearGradient(
+                  colors: [Colors.red.shade100, Colors.red.shade50],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                iconColor: Colors.red.shade600,
+                iconBg: Colors.red.shade50,
+              ),
+              _quickStat(
+                Icons.water_drop_rounded,
+                "Humidity",
+                "${humidity.toStringAsFixed(1)}%",
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade100, Colors.blue.shade50],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                iconColor: Colors.blue.shade600,
+                iconBg: Colors.blue.shade50,
+              ),
+              _quickStat(
+                Icons.wb_sunny_rounded,
+                "Light",
+                "${lightIntensity.toStringAsFixed(0)} Lux",
+                gradient: LinearGradient(
+                  colors: [Colors.orange.shade100, Colors.orange.shade50],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                iconColor: Colors.orange.shade600,
+                iconBg: Colors.orange.shade50,
+              ),
+              _quickStat(
+                Icons.waves_rounded,
+                "Water Level",
+                "${waterLevel.toStringAsFixed(0)}%",
+                gradient: LinearGradient(
+                  colors: [
+                    waterBlue.withValues(alpha: 0.2),
+                    waterBlue.withValues(alpha: 0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                iconColor: waterBlue,
+                iconBg: mintGreen.withValues(alpha: 0.3),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 40),
+
+          // Quick Actions Title
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [leafGreen, waterBlue],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Quick Actions",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: deepGreen,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const Text(
+                      "Administration tools",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+
+          // Quick Actions Cards
+          _actionCard(
+            icon: Icons.people_outline_rounded,
+            title: "User Management",
+            subtitle: "Manage system users & permissions",
+            color: adminBlue,
+            gradient: LinearGradient(
+              colors: [
+                adminBlue.withValues(alpha: 0.1),
+                adminBlue.withValues(alpha: 0.05),
+              ],
+            ),
+            onTap: () => _onItemTapped(1),
+          ),
+
+          const SizedBox(height: 16),
+
+          _actionCard(
+            icon: Icons.sensors_rounded,
+            title: "Sensor Dashboard",
+            subtitle: "Detailed sensor analytics & control",
+            color: leafGreen,
+            gradient: LinearGradient(
+              colors: [
+                leafGreen.withValues(alpha: 0.1),
+                leafGreen.withValues(alpha: 0.05),
+              ],
+            ),
+            badgeCount: _getTotalSensors(),
+            onTap: () => _onItemTapped(2),
+          ),
+
+          const SizedBox(height: 16),
+
+          _actionCard(
+            icon: Icons.analytics_rounded,
+            title: "Analytics Center",
+            subtitle: "Performance reports & insights",
+            color: adminPurple,
+            gradient: LinearGradient(
+              colors: [
+                adminPurple.withValues(alpha: 0.1),
+                adminPurple.withValues(alpha: 0.05),
+              ],
+            ),
+            onTap: () => _onItemTapped(3),
+          ),
+
+          const SizedBox(height: 16),
+
+          _actionCard(
+            icon: Icons.chat_bubble_outline_rounded,
+            title: "Message Center",
+            subtitle: "View & respond to user messages",
+            color: waterBlue,
+            gradient: LinearGradient(
+              colors: [
+                waterBlue.withValues(alpha: 0.1),
+                waterBlue.withValues(alpha: 0.05),
+              ],
+            ),
+            badgeCount: totalMessages,
+            onTap: () => _onItemTapped(4),
+          ),
+
+          const SizedBox(height: 16),
+
+          _actionCard(
+            icon: Icons.settings_rounded,
+            title: "System Settings",
+            subtitle: "Configure system parameters",
+            color: sunlightOrange,
+            gradient: LinearGradient(
+              colors: [
+                sunlightOrange.withValues(alpha: 0.1),
+                sunlightOrange.withValues(alpha: 0.05),
+              ],
+            ),
+            onTap: () => _onItemTapped(5),
+          ),
+
+          const SizedBox(height: 16),
+
+          _actionCard(
+            icon: Icons.history_toggle_off_rounded,
+            title: "Activity Log",
+            subtitle: "System events & audit trail",
+            color: deepGreen,
+            gradient: LinearGradient(
+              colors: [
+                deepGreen.withValues(alpha: 0.1),
+                deepGreen.withValues(alpha: 0.05),
+              ],
+            ),
+            onTap: () => _onItemTapped(6),
+          ),
+
+          const SizedBox(height: 40),
+
+          // System Info Card
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  leafGreen.withValues(alpha: 0.1),
+                  leafGreen.withValues(alpha: 0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: leafGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: leafGreen.withValues(alpha: 0.2),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    color: leafGreen,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "System Information",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          color: deepGreen,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isLoading
+                            ? "Fetching live data from sensors..."
+                            : "${allSensors.length} sensor readings • ${_getTotalSensors()} active sensors • $totalMessages new messages\nLast updated: ${_getLastUpdateTime()}",
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Logout Button - Styling yang sama dengan card lainnya
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _logout,
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      adminRed.withValues(alpha: 0.1),
+                      adminRed.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: adminRed.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: adminRed.withValues(alpha: 0.2),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.logout_rounded,
+                        color: adminRed,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Logout",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: deepGreen,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Sign out from admin account",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 24,
+                      color: adminRed,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 40),
         ],
       ),
     );
   }
 
-  Widget _sensorCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required String unit,
-    required LinearGradient gradient, // tidak dipakai lagi
+  Widget _statCard(
+    IconData icon,
+    String title,
+    String value, {
+    required Color iconColor,
+    required Color iconBg,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(radiusMedium),
-        border: Border.all(color: Colors.grey.shade200),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 18),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: iconColor.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              const Spacer(),
-              Text(
-                unit,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: textSecondary,
-                ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: deepGreen.withValues(alpha: 0.7),
+                letterSpacing: 0.5,
               ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: textSecondary,
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: deepGreen,
+                letterSpacing: 0.5,
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickStat(
+    IconData icon,
+    String title,
+    String value, {
+    required Gradient gradient,
+    required Color iconColor,
+    required Color iconBg,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: iconColor.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: deepGreen.withValues(alpha: 0.7),
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: deepGreen,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1770,7 +2200,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required String title,
     required String subtitle,
     required Color color,
-    required LinearGradient gradient, // tidak dipakai
+    required Gradient gradient,
     required VoidCallback onTap,
     int? badgeCount,
   }) {
@@ -1778,86 +2208,247 @@ class _DashboardPageState extends State<DashboardPage> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(radiusMedium),
+        borderRadius: BorderRadius.circular(24),
         child: Container(
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(radiusMedium),
-            border: Border.all(color: Colors.grey.shade200),
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: Row(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.2),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, color: color, size: 28),
                     ),
-                    child: Icon(icon, color: color, size: 22),
-                  ),
-                  if (badgeCount != null && badgeCount > 0)
-                    Positioned(
-                      top: -6,
-                      right: -6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: accentRed,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: surface, width: 2),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 20,
-                          minHeight: 20,
-                        ),
-                        child: Center(
-                          child: Text(
-                            badgeCount > 9 ? '9+' : badgeCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                    if (badgeCount != null && badgeCount > 0)
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: adminRed,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: adminRed.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 24,
+                            minHeight: 24,
+                          ),
+                          child: Center(
+                            child: Text(
+                              badgeCount > 9 ? '9+' : badgeCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: deepGreen,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 24,
+                  color: color,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorScreen() {
+    return Scaffold(
+      backgroundColor: bgGradientStart,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgGradientStart, bgGradientEnd],
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [adminRed, Colors.orangeAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                    boxShadow: [
+                      BoxShadow(
+                        color: adminRed.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.error_outline_rounded,
+                    size: 64,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  'Oops! Something went wrong',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: deepGreen,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: leafGreen.withValues(alpha: 0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    errorMessage,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: leafGreen,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 5,
+                        shadowColor: leafGreen.withValues(alpha: 0.4),
+                      ),
+                      child: const Text(
+                        'Back to Login',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _manualRefresh,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: leafGreen, width: 2),
+                        ),
+                        elevation: 3,
+                      ),
+                      child: Text(
+                        'Try Again',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: leafGreen,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Icon(Icons.chevron_right, size: 20, color: textSecondary),
-            ],
+              ],
+            ),
           ),
         ),
       ),
