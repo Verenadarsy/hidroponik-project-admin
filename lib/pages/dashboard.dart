@@ -768,105 +768,117 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildBottomNav() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      child: Container(
-        height: 76,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(38),
-          boxShadow: [
-            BoxShadow(
-              color: deepGreen.withValues(alpha: 0.12),
-              blurRadius: 40,
-              offset: const Offset(0, 10),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(38),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  width: 1.2,
-                ),
+  final screenWidth = MediaQuery.of(context).size.width;
+  // Lebih agresif: hide text di layar < 420px
+  final showLabels = screenWidth >= 420;
+  final isVerySmall = screenWidth < 360;
+
+  return Padding(
+    padding: EdgeInsets.fromLTRB(
+      isVerySmall ? 8 : (showLabels ? 20 : 16),
+      0,
+      isVerySmall ? 8 : (showLabels ? 20 : 16),
+      isVerySmall ? 8 : (showLabels ? 20 : 16),
+    ),
+    child: Container(
+      height: showLabels ? 76 : (isVerySmall ? 60 : 68),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(showLabels ? 38 : (isVerySmall ? 30 : 34)),
+        boxShadow: [
+          BoxShadow(
+            color: deepGreen.withValues(alpha: 0.12),
+            blurRadius: 40,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(showLabels ? 38 : (isVerySmall ? 30 : 34)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.85),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.35),
+                width: 1.2,
               ),
-              child: Row(
-                children: [
-                  _navItem(Icons.home_rounded, 0),
-                  _navItem(Icons.people_rounded, 1),
-                  _navItem(Icons.sensors_rounded, 2),
-                  _navItem(Icons.analytics_rounded, 3),
-                  _navItem(Icons.message_rounded, 4),
-                ],
-              ),
+            ),
+            child: Row(
+              children: [
+                _navItem(Icons.home_rounded, 0, showLabels, isVerySmall),
+                _navItem(Icons.people_rounded, 1, showLabels, isVerySmall),
+                _navItem(Icons.sensors_rounded, 2, showLabels, isVerySmall),
+                _navItem(Icons.analytics_rounded, 3, showLabels, isVerySmall),
+                _navItem(Icons.message_rounded, 4, showLabels, isVerySmall),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _navItem(IconData icon, int index) {
-    final selected = index == _selectedIndex;
+Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
+  final selected = index == _selectedIndex;
 
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _onItemTapped(index),
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(
-              horizontal: selected ? 22 : 14,
-              vertical: 12,
+  return Expanded(
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _onItemTapped(index),
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.symmetric(
+            horizontal: isVerySmall
+                ? (selected ? 8 : 4)
+                : (showLabels ? (selected ? 22 : 14) : (selected ? 14 : 8)),
+            vertical: isVerySmall ? 6 : (showLabels ? 12 : 10),
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(
+              isVerySmall ? 16 : (showLabels ? 28 : 22),
             ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: selected
-                  ? LinearGradient(
-                      colors: [
-                        leafGreen.withValues(alpha: 0.95),
-                        waterBlue.withValues(alpha: 0.95),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: selected ? null : Colors.white.withValues(alpha: 0.9),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: leafGreen.withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
+            gradient: selected
+                ? LinearGradient(
+                    colors: [
+                      leafGreen.withValues(alpha: 0.95),
+                      waterBlue.withValues(alpha: 0.95),
                     ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: selected ? 22 : 20,
-                  color: selected ? Colors.white : Colors.grey.shade700,
-                ),
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: selected ? null : Colors.transparent,
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: leafGreen.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: isVerySmall
+                    ? 20
+                    : (showLabels ? (selected ? 22 : 20) : (selected ? 24 : 22)),
+                color: selected ? Colors.white : Colors.grey.shade700,
+              ),
+              // Hanya tampilkan text di layar >= 420px
+              if (showLabels) ...[
                 const SizedBox(height: 4),
                 Text(
                   _getNavLabel(index),
@@ -875,14 +887,17 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: selected ? Colors.white : Colors.grey.shade600,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   ),
+                  overflow: TextOverflow.clip,
+                  maxLines: 1,
                 ),
               ],
-            ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   String _getNavLabel(int index) {
     switch (index) {
@@ -912,137 +927,154 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [deepGreen, forestGreen],
-          stops: const [0.0, 0.8],
-        ),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
-        boxShadow: [
-          BoxShadow(
-            color: deepGreen.withValues(alpha: 0.4),
-            blurRadius: 40,
-            spreadRadius: 2,
-            offset: const Offset(0, 10),
-          ),
-        ],
+  // Deteksi ukuran layar
+  final screenWidth = MediaQuery.of(context).size.width;
+  final isSmallScreen = screenWidth < 380;
+
+  return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [deepGreen, forestGreen],
+        stops: const [0.0, 0.8],
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // TOP BAR dengan Refresh Button
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
+      boxShadow: [
+        BoxShadow(
+          color: deepGreen.withValues(alpha: 0.4),
+          blurRadius: 40,
+          spreadRadius: 2,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    ),
+    child: SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          // TOP BAR dengan Refresh Button
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              isSmallScreen ? 16 : 24,
+              20,
+              isSmallScreen ? 16 : 24,
+              0,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left Section - Logo & Title
+                Expanded(
+                  child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.1),
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.admin_panel_settings_rounded,
                           color: Colors.white,
-                          size: 40,
+                          size: isSmallScreen ? 24 : 40,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "HydroGrow Admin",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 24,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          Text(
-                            "System Administration",
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      // Refresh Button
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: GestureDetector(
-                          onTap: _manualRefresh,
-                          child: Icon(
-                            Icons.refresh_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Notification Button
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: Stack(
+                      SizedBox(width: isSmallScreen ? 10 : 16),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.notifications_outlined,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                            if (totalMessages > 0)
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: sunlightOrange,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
+                            Text(
+                              "HydroGrow",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: isSmallScreen ? 18 : 24,
+                                letterSpacing: 0.5,
                               ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              isSmallScreen ? "Admin" : "System Administration",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: isSmallScreen ? 11 : 13,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 1,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                // Right Section - Action Buttons
+                Row(
+                  children: [
+                    // Refresh Button
+                    Container(
+                      padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: _manualRefresh,
+                        child: Icon(
+                          Icons.refresh_rounded,
+                          color: Colors.white,
+                          size: isSmallScreen ? 20 : 24,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: isSmallScreen ? 8 : 12),
+                    // Notification Button
+                    Container(
+                      padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Icon(
+                            Icons.notifications_outlined,
+                            color: Colors.white,
+                            size: isSmallScreen ? 20 : 24,
+                          ),
+                          if (totalMessages > 0)
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: sunlightOrange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
+          ),
 
             const SizedBox(height: 24),
 

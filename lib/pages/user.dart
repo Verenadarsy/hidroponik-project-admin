@@ -535,212 +535,227 @@ class _UsersPageState extends State<UsersPage> {
   }
 
   Widget _buildUserCard(Map<String, dynamic> user, int index) {
-    final isAdmin = user['role'] == 'admin';
-    final isActive = user['status'] == 'active';
-    final email = user['email'] ?? '';
-    final name = user['name'] ?? 'User ${user['id']}';
-    final joinedDate = user['create_at'] != null
-        ? _formatDate(user['create_at'])
-        : 'N/A';
+  final isAdmin = user['role'] == 'admin';
+  final isActive = user['status'] == 'active';
+  final email = user['email'] ?? '';
+  final name = user['name'] ?? 'User ${user['id']}';
+  final joinedDate = user['create_at'] != null
+      ? _formatDate(user['create_at'])
+      : 'N/A';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(
-          color: isAdmin ? darkGreen.withValues(alpha: 0.2) : borderColor,
-          width: 1.5,
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 20,
+          offset: const Offset(0, 5),
         ),
+      ],
+      border: Border.all(
+        color: isAdmin ? darkGreen.withValues(alpha: 0.2) : borderColor,
+        width: 1.5,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showUserDetails(user),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Avatar with status indicator
-                Stack(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showUserDetails(user),
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              // Avatar with status indicator
+              Stack(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: isAdmin
+                          ? darkGreen.withValues(alpha: 0.1)
+                          : accentBlue.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isAdmin ? Icons.admin_panel_settings : Icons.person,
+                      color: isAdmin ? darkGreen : accentBlue,
+                      size: 30,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
                       decoration: BoxDecoration(
-                        color: isAdmin
-                            ? darkGreen.withValues(alpha: 0.1)
-                            : accentBlue.withValues(alpha: 0.1),
+                        color: isActive ? Colors.green : Colors.red,
                         shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isAdmin ? Icons.admin_panel_settings : Icons.person,
-                        color: isAdmin ? darkGreen : accentBlue,
-                        size: 28,
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
                     ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: isActive ? Colors.green : Colors.red,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+
+              // User Info - EXPANDED untuk mencegah overflow
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Name + Badge Row
+                    Row(
+                      children: [
+                        Flexible( // ← PENTING: Pakai Flexible di sini
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: darkGreen,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         ),
+                        if (isAdmin) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [darkGreen, mediumGreen],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'ADMIN',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Email
+                    Text(
+                      email,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Status + Date Row - WRAP supaya tidak overflow
+                    Wrap( // ← SOLUSI UTAMA: Pakai Wrap
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        // Status Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isActive ? Icons.circle : Icons.circle_outlined,
+                                size: 10,
+                                color: isActive ? Colors.green : Colors.red,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isActive ? 'Active' : 'Inactive',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isActive ? Colors.green : Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Joined Date
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 13,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              joinedDate,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(width: 16),
+              ),
 
-                // User Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: darkGreen,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (isAdmin)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [darkGreen, mediumGreen],
-                                ),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'ADMIN',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        email,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? Colors.green.withValues(alpha: 0.1)
-                                  : Colors.red.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  isActive
-                                      ? Icons.circle
-                                      : Icons.circle_outlined,
-                                  size: 10,
-                                  color: isActive ? Colors.green : Colors.red,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isActive ? 'Active' : 'Inactive',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isActive ? Colors.green : Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.calendar_today,
-                            size: 14,
-                            color: Colors.grey.shade400,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Joined: $joinedDate',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+              // Switch - di luar Expanded
+              Transform.scale(
+                scale: 0.85,
+                child: Switch(
+                  value: isActive,
+                  onChanged: (value) => _toggleUserStatus(
+                    user['id'],
+                    user['status'] ?? 'active',
                   ),
-                ),
-
-                // Switch
-                Transform.scale(
-                  scale: 0.9,
-                  child: Switch(
-                    value: isActive,
-                    onChanged: (value) => _toggleUserStatus(
-                      user['id'],
-                      user['status'] ?? 'active',
-                    ),
-                    activeThumbColor: Colors.green,
-                    inactiveTrackColor: Colors.grey.shade300,
-                    activeTrackColor: Colors.green.shade200,
-                    thumbColor: WidgetStateProperty.resolveWith<Color>((
-                      Set<WidgetState> states,
-                    ) {
-                      if (states.contains(WidgetState.selected)) {
-                        return Colors.white;
-                      }
+                  activeThumbColor: Colors.green,
+                  inactiveTrackColor: Colors.grey.shade300,
+                  activeTrackColor: Colors.green.shade200,
+                  thumbColor: WidgetStateProperty.resolveWith<Color>((
+                    Set<WidgetState> states,
+                  ) {
+                    if (states.contains(WidgetState.selected)) {
                       return Colors.white;
-                    }),
-                  ),
+                    }
+                    return Colors.white;
+                  }),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSearchBar() {
     return Padding(

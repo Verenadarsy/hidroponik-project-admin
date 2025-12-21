@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/shared.dart';
 import '../services/api.dart';
 import '../models/message_model.dart';
+import 'chat_room_detail.dart';
 
 class MessagesPage extends StatefulWidget {
   const MessagesPage({super.key});
@@ -15,8 +16,6 @@ class _MessagesPageState extends State<MessagesPage> {
   final Color darkGreen = const Color(0xFF456028);
   final Color mediumGreen = const Color(0xFF94A65E);
   final Color lightGreen = const Color(0xFFDDDDA1);
-  final Color adminMessageBg = const Color(0xFFE3F2FD);
-  final Color userMessageBg = const Color(0xFFF5F5F5);
 
   // State
   bool _isLoading = true;
@@ -26,9 +25,6 @@ class _MessagesPageState extends State<MessagesPage> {
 
   // Thread management
   final Map<int, ChatThread> _chatThreads = {}; // Key: sender_id
-  final Map<int, TextEditingController> _replyControllers = {};
-  final Map<int, bool> _isReplying = {};
-  int? _selectedThreadId; // sender_id yang dipilih
 
   // Filter
   String _filter = 'all'; // 'all', 'unread', 'replied'
@@ -38,12 +34,6 @@ class _MessagesPageState extends State<MessagesPage> {
   void initState() {
     super.initState();
     _loadMessages();
-  }
-
-  @override
-  void dispose() {
-    _replyControllers.values.forEach((c) => c.dispose());
-    super.dispose();
   }
 
   Future<void> _loadMessages() async {
@@ -141,12 +131,6 @@ class _MessagesPageState extends State<MessagesPage> {
         );
       }
 
-      // Initialize controller if not exists
-      if (!_replyControllers.containsKey(senderId)) {
-        _replyControllers[senderId] = TextEditingController();
-        _isReplying[senderId] = false;
-      }
-
       _chatThreads[senderId] = thread;
 
       // Load replies for this thread
@@ -194,86 +178,6 @@ class _MessagesPageState extends State<MessagesPage> {
       }
     } catch (e) {
       print('❌ Error loading replies for thread $senderId: $e');
-    }
-  }
-
-  Future<void> _sendReply(int senderId) async {
-    final controller = _replyControllers[senderId];
-    final replyText = controller?.text.trim() ?? '';
-
-    if (replyText.isEmpty || _token == null) return;
-
-    try {
-      setState(() => _isReplying[senderId] = true);
-
-      final thread = _chatThreads[senderId];
-      if (thread == null || thread.lastMessageId == null) return;
-
-      // Add optimistic reply
-      final optimisticReply = ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch,
-        content: replyText,
-        senderId: 0, // Admin ID
-        isAdmin: true,
-        timestamp: DateTime.now(),
-        isRead: true,
-      );
-
-      setState(() {
-        thread.messages.add(optimisticReply);
-        thread.lastMessageTime = DateTime.now();
-      });
-
-      controller?.clear();
-
-      // Send to server
-      final success = await ApiService.sendReply(
-        _token!,
-        thread.lastMessageId!,
-        replyText,
-      );
-
-      if (success) {
-        // Mark all user messages as read
-        for (var msg in thread.messages.where((m) => !m.isAdmin && !m.isRead)) {
-          msg.isRead = true;
-        }
-
-        // Update unread counts
-        _updateUnreadCounts();
-
-        // Reload to get server ID
-        await _loadRepliesForThread(senderId);
-
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reply sent'), backgroundColor: Colors.green),
-        );
-      } else {
-        // Remove optimistic reply
-        setState(() {
-          thread.messages.remove(optimisticReply);
-        });
-
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send reply'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      print('❌ Error sending reply: $e');
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() => _isReplying[senderId] = false);
     }
   }
 
@@ -346,20 +250,11 @@ class _MessagesPageState extends State<MessagesPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          _selectedThreadId != null
-              ? _chatThreads[_selectedThreadId]?.senderName ?? 'Chat'
-              : 'Messages',
+          'Messages',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: darkGreen,
         iconTheme: IconThemeData(color: Colors.white),
-        leading: _selectedThreadId != null
-            ? IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () => setState(() => _selectedThreadId = null),
-                tooltip: 'Back to inbox',
-              )
-            : null,
         actions: _buildAppBarActions(),
       ),
       body: _buildBody(),
@@ -367,29 +262,6 @@ class _MessagesPageState extends State<MessagesPage> {
   }
 
   List<Widget> _buildAppBarActions() {
-    if (_selectedThreadId != null) {
-      final thread = _chatThreads[_selectedThreadId];
-      final hasUnread = (thread?.unreadCount ?? 0) > 0;
-
-      return [
-        if (hasUnread)
-          IconButton(
-            icon: Icon(Icons.mark_email_read),
-            onPressed: () => _markThreadAsRead(_selectedThreadId!),
-            tooltip: 'Mark all as read',
-          ),
-        IconButton(
-          icon: Icon(Icons.refresh),
-          onPressed: () {
-            if (_selectedThreadId != null) {
-              _loadRepliesForThread(_selectedThreadId!);
-            }
-          },
-          tooltip: 'Refresh chat',
-        ),
-      ];
-    }
-
     return [
       // Filter dropdown
       PopupMenuButton<String>(
@@ -499,10 +371,6 @@ class _MessagesPageState extends State<MessagesPage> {
           ),
         ),
       );
-    }
-
-    if (_selectedThreadId != null) {
-      return _buildChatRoom(_selectedThreadId!);
     }
 
     return _buildInbox();
@@ -698,322 +566,23 @@ class _MessagesPageState extends State<MessagesPage> {
             ),
           ],
         ),
-        onTap: () {
-          setState(() => _selectedThreadId = thread.senderId);
+        onTap: () async {
+          // Navigate to chat room detail
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatRoomDetailPage(
+                thread: thread,
+                token: _token!,
+              ),
+            ),
+          );
+
+          // Refresh if needed
+          if (result == true) {
+            _loadMessages();
+          }
         },
-      ),
-    );
-  }
-
-  Widget _buildChatRoom(int senderId) {
-    final thread = _chatThreads[senderId];
-    if (thread == null) {
-      return Center(child: Text('Thread not found'));
-    }
-
-    final controller = _replyControllers[senderId] ?? TextEditingController();
-    final isReplying = _isReplying[senderId] ?? false;
-    final messages = thread.messages;
-
-    return Column(
-      children: [
-        // Thread header
-        Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.blue.shade100,
-                child: Text(
-                  thread.senderName.substring(0, 1).toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.blue.shade800,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      thread.senderName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: darkGreen,
-                      ),
-                    ),
-                    Text(
-                      thread.senderEmail,
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              if (thread.unreadCount > 0)
-                ElevatedButton.icon(
-                  onPressed: () => _markThreadAsRead(senderId),
-                  icon: Icon(Icons.mark_email_read, size: 16),
-                  label: Text('Mark Read'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    elevation: 0,
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        // Chat messages
-        Expanded(
-          child: messages.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.forum_outlined,
-                        size: 64,
-                        color: Colors.grey.shade300,
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'Start a conversation',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  reverse: true,
-                  padding: EdgeInsets.all(16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[messages.length - 1 - index];
-                    return _buildChatBubble(msg, thread.senderName);
-                  },
-                ),
-        ),
-
-        // Reply input
-        Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Colors.grey.shade200)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: controller,
-                          decoration: InputDecoration(
-                            hintText: 'Type your reply...',
-                            border: InputBorder.none,
-                          ),
-                          maxLines: 3,
-                          minLines: 1,
-                          onSubmitted: (_) {
-                            if (!isReplying) _sendReply(senderId);
-                          },
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.attach_file, color: Colors.grey),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [darkGreen, mediumGreen],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: darkGreen.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: isReplying
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Icon(Icons.send, color: Colors.white),
-                  onPressed: isReplying ? null : () => _sendReply(senderId),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChatBubble(ChatMessage msg, String userName) {
-    final isAdmin = msg.isAdmin;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: isAdmin
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        children: [
-          if (!isAdmin)
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.blue.shade100,
-              child: Text(
-                userName.substring(0, 1).toUpperCase(),
-                style: TextStyle(
-                  color: Colors.blue.shade800,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-          SizedBox(width: 8),
-
-          Flexible(
-            child: Column(
-              crossAxisAlignment: isAdmin
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                if (!isAdmin)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      userName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                  ),
-
-                Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.7,
-                  ),
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isAdmin ? darkGreen : userMessageBg,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        msg.content,
-                        style: TextStyle(
-                          color: isAdmin ? Colors.white : Colors.black87,
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _formatTime(msg.timestamp),
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isAdmin
-                                  ? Colors.white.withValues(alpha: 0.8)
-                                  : Colors.grey.shade600,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          if (isAdmin)
-                            Icon(
-                              Icons.done_all,
-                              size: 12,
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(width: 8),
-
-          if (isAdmin)
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white,
-              child: Icon(
-                Icons.admin_panel_settings,
-                size: 16,
-                color: darkGreen,
-              ),
-            ),
-        ],
       ),
     );
   }
@@ -1049,11 +618,6 @@ class _MessagesPageState extends State<MessagesPage> {
       // For now, just remove from UI
       setState(() {
         _chatThreads.remove(senderId);
-        _replyControllers.remove(senderId)?.dispose();
-        _isReplying.remove(senderId);
-        if (_selectedThreadId == senderId) {
-          _selectedThreadId = null;
-        }
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1078,10 +642,6 @@ class _MessagesPageState extends State<MessagesPage> {
     if (diff.inDays < 7) return '${diff.inDays}d ago';
 
     return '${date.day}/${date.month}/${date.year}';
-  }
-
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
 
