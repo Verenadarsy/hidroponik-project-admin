@@ -16,7 +16,8 @@ class _SettingsPageState extends State<SettingsPage> {
   final Color lightGreen = const Color(0xFFDDDDA1);
   final Color creamBackground = const Color(0xFFF8F9FA);
 
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl =
+      'https://uncollapsable-overfly-blaine.ngrok-free.dev/api';
   String? _token;
 
   // Settings state
@@ -70,6 +71,7 @@ class _SettingsPageState extends State<SettingsPage> {
         headers: {
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
           'Accept': 'application/json',
         },
         body: jsonEncode(settings),

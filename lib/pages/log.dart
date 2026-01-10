@@ -15,7 +15,8 @@ class _LogsPageState extends State<LogsPage> {
   final Color mediumGreen = const Color(0xFF94A65E);
   final Color creamBackground = const Color(0xFFF8F9FA);
 
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl =
+      'https://uncollapsable-overfly-blaine.ngrok-free.dev/api';
   String? _token;
 
   List<dynamic> logs = [];
@@ -43,6 +44,7 @@ class _LogsPageState extends State<LogsPage> {
         headers: {
           'Authorization': 'Bearer $_token',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 

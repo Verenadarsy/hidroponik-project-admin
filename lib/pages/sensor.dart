@@ -26,7 +26,8 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
   final Color lightGreen = const Color(0xFFDDDDA1);
   final Color creamBackground = const Color(0xFFF8F9FA);
 
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl =
+      'https://uncollapsable-overfly-blaine.ngrok-free.dev/api';
   String? _token;
 
   List<SensorData> sensorHistory = [];
@@ -69,6 +70,7 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
         ),
         headers: {
           'Authorization': 'Bearer $_token',
+          'ngrok-skip-browser-warning': 'true',
           'Accept': 'application/json',
         },
       );
@@ -820,7 +822,7 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                   const SizedBox(height: 20),
 
                   // Data Table
-                                    // Data Table - FULL WIDTH
+                  // Data Table - FULL WIDTH
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -867,7 +869,9 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                               columns: [
                                 DataColumn(
                                   label: Container(
-                                    width: MediaQuery.of(context).size.width * 0.25,
+                                    width:
+                                        MediaQuery.of(context).size.width *
+                                        0.25,
                                     child: Text(
                                       'Time',
                                       style: TextStyle(
@@ -880,7 +884,9 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                                 ),
                                 DataColumn(
                                   label: Container(
-                                    width: MediaQuery.of(context).size.width * 0.35,
+                                    width:
+                                        MediaQuery.of(context).size.width *
+                                        0.35,
                                     child: Text(
                                       'Value',
                                       style: TextStyle(
@@ -893,7 +899,9 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                                 ),
                                 DataColumn(
                                   label: Container(
-                                    width: MediaQuery.of(context).size.width * 0.30,
+                                    width:
+                                        MediaQuery.of(context).size.width *
+                                        0.30,
                                     child: Text(
                                       'Status',
                                       style: TextStyle(
@@ -913,7 +921,9 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                                   cells: [
                                     DataCell(
                                       Container(
-                                        width: MediaQuery.of(context).size.width * 0.25,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                            0.25,
                                         child: Text(
                                           '${data.timestamp.hour}:${data.timestamp.minute.toString().padLeft(2, '0')}',
                                           style: TextStyle(
@@ -924,7 +934,9 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                                     ),
                                     DataCell(
                                       Container(
-                                        width: MediaQuery.of(context).size.width * 0.35,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                            0.35,
                                         child: Text(
                                           '${data.value.toStringAsFixed(widget.sensorName == 'ph' || widget.sensorName == 'ec' ? 2 : 1)}${_getUnit()}',
                                           style: TextStyle(
@@ -936,7 +948,9 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                                     ),
                                     DataCell(
                                       Container(
-                                        width: MediaQuery.of(context).size.width * 0.30,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                            0.30,
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                           vertical: 4,
@@ -945,13 +959,17 @@ class _SensorDetailPageState extends State<SensorDetailPage> {
                                           color: isOptimal
                                               ? Colors.green.withOpacity(0.1)
                                               : Colors.orange.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: Text(
                                           isOptimal ? 'Optimal' : 'Check',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: isOptimal ? Colors.green : Colors.orange,
+                                            color: isOptimal
+                                                ? Colors.green
+                                                : Colors.orange,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
