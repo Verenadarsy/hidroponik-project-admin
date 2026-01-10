@@ -7,7 +7,8 @@ import '../models/sensor_model.dart';
 import '../models/message_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:5000';
+  static const String baseUrl =
+      'https://uncollapsable-overfly-blaine.ngrok-free.dev';
 
   // Helper untuk headers
   static Map<String, String> _getHeaders(String token) {
@@ -15,6 +16,7 @@ class ApiService {
       'Authorization': 'Bearer $token',
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
     };
   }
 
@@ -40,6 +42,7 @@ class ApiService {
         Uri.parse('$baseUrl/api/login'),
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
           'Accept': 'application/json',
         },
         body: jsonEncode({'email': email, 'password': password}),
@@ -350,7 +353,10 @@ class ApiService {
 
       final response = await http.get(
         Uri.parse('$baseUrl/api/admin/test'),
-        headers: {"Authorization": "Bearer $token"},
+        headers: {
+          "Authorization": "Bearer $token",
+          'ngrok-skip-browser-warning': 'true',
+        },
       );
 
       print('🧪 Test Response: ${response.statusCode}');
@@ -439,6 +445,7 @@ class ApiService {
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 
@@ -611,6 +618,7 @@ class ApiService {
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 
@@ -700,6 +708,7 @@ class ApiService {
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 
@@ -748,6 +757,7 @@ class ApiService {
         Uri.parse('$baseUrl/api/admin/messages/reply'),
         headers: {
           'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({'user_id': userId, 'message': message}),
@@ -775,6 +785,7 @@ class ApiService {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
           'receiver_id': receiverId,
@@ -813,6 +824,7 @@ class ApiService {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({'message': message, 'sender_id': senderId}),
       );
@@ -846,6 +858,7 @@ class ApiService {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({'content': content}),
       );

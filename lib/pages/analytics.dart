@@ -21,7 +21,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   final Color accentOrange = const Color(0xFFD18B47);
   final Color accentPurple = const Color(0xFF7B68B5);
 
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl =
+      'https://uncollapsable-overfly-blaine.ngrok-free.dev/api';
   String? _token;
 
   // Analytics data
@@ -48,6 +49,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       final response = await http.get(
         Uri.parse('$baseUrl/admin/analytics?period=$selectedPeriod'),
         headers: {
+          'ngrok-skip-browser-warning': 'true',
           'Authorization': 'Bearer $_token',
           'Accept': 'application/json',
         },
@@ -1306,7 +1308,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.only( // 🔹 PERUBAHAN DI SINI
+              padding: const EdgeInsets.only(
+                // 🔹 PERUBAHAN DI SINI
                 left: 16,
                 right: 16,
                 top: 16,

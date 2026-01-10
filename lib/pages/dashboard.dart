@@ -42,7 +42,8 @@ class _DashboardPageState extends State<DashboardPage> {
   final Color adminRed = const Color(0xFFEF5350);
 
   // API endpoint
-  static const String baseUrl = 'http://localhost:5000';
+  static const String baseUrl =
+      'https://uncollapsable-overfly-blaine.ngrok-free.dev';
 
   // State variables
   int _selectedIndex = 0;
@@ -167,6 +168,7 @@ class _DashboardPageState extends State<DashboardPage> {
         url,
         headers: {
           'Authorization': 'Bearer $_token',
+          'ngrok-skip-browser-warning': 'true',
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
@@ -319,6 +321,7 @@ class _DashboardPageState extends State<DashboardPage> {
         url,
         headers: {
           'Authorization': 'Bearer $_token',
+          'ngrok-skip-browser-warning': 'true',
           'Accept': 'application/json',
         },
       );
@@ -408,7 +411,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-    Widget _pollutantInfo(String label, String value, String unit) {
+  Widget _pollutantInfo(String label, String value, String unit) {
     return Column(
       children: [
         Text(
@@ -544,7 +547,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return 'Cloudy';
   }
 
-    Future<void> _fetchAirQualityData() async {
+  Future<void> _fetchAirQualityData() async {
     setState(() => airQualityLoading = true);
 
     try {
@@ -637,11 +640,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           title: Row(
             children: [
-              Icon(
-                Icons.logout_rounded,
-                color: adminRed,
-                size: 24,
-              ),
+              Icon(Icons.logout_rounded, color: adminRed, size: 24),
               const SizedBox(width: 12),
               Text(
                 'Logout',
@@ -669,7 +668,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
               child: const Text('Cancel'),
             ),
@@ -681,7 +683,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 elevation: 2,
               ),
               child: const Text('Logout'),
@@ -692,7 +697,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
 
     if (!confirm) return;
-
 
     // Tampilkan loading sebelum redirect
     setState(() {
@@ -707,12 +711,10 @@ class _DashboardPageState extends State<DashboardPage> {
     Navigator.pushAndRemoveUntil(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const SplashScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const SplashScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
         transitionDuration: const Duration(milliseconds: 500),
       ),
@@ -768,136 +770,142 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildBottomNav() {
-  final screenWidth = MediaQuery.of(context).size.width;
-  // Lebih agresif: hide text di layar < 420px
-  final showLabels = screenWidth >= 420;
-  final isVerySmall = screenWidth < 360;
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Lebih agresif: hide text di layar < 420px
+    final showLabels = screenWidth >= 420;
+    final isVerySmall = screenWidth < 360;
 
-  return Padding(
-    padding: EdgeInsets.fromLTRB(
-      isVerySmall ? 8 : (showLabels ? 20 : 16),
-      0,
-      isVerySmall ? 8 : (showLabels ? 20 : 16),
-      isVerySmall ? 8 : (showLabels ? 20 : 16),
-    ),
-    child: Container(
-      height: showLabels ? 76 : (isVerySmall ? 60 : 68),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(showLabels ? 38 : (isVerySmall ? 30 : 34)),
-        boxShadow: [
-          BoxShadow(
-            color: deepGreen.withValues(alpha: 0.12),
-            blurRadius: 40,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 5),
-          ),
-        ],
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        isVerySmall ? 8 : (showLabels ? 20 : 16),
+        0,
+        isVerySmall ? 8 : (showLabels ? 20 : 16),
+        isVerySmall ? 8 : (showLabels ? 20 : 16),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(showLabels ? 38 : (isVerySmall ? 30 : 34)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.85),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.35),
-                width: 1.2,
-              ),
-            ),
-            child: Row(
-              children: [
-                _navItem(Icons.home_rounded, 0, showLabels, isVerySmall),
-                _navItem(Icons.people_rounded, 1, showLabels, isVerySmall),
-                _navItem(Icons.sensors_rounded, 2, showLabels, isVerySmall),
-                _navItem(Icons.analytics_rounded, 3, showLabels, isVerySmall),
-                _navItem(Icons.message_rounded, 4, showLabels, isVerySmall),
-              ],
-            ),
+      child: Container(
+        height: showLabels ? 76 : (isVerySmall ? 60 : 68),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(
+            showLabels ? 38 : (isVerySmall ? 30 : 34),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: deepGreen.withValues(alpha: 0.12),
+              blurRadius: 40,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-      ),
-    ),
-  );
-}
-
-Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
-  final selected = index == _selectedIndex;
-
-  return Expanded(
-    child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _onItemTapped(index),
-      child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.symmetric(
-            horizontal: isVerySmall
-                ? (selected ? 8 : 4)
-                : (showLabels ? (selected ? 22 : 14) : (selected ? 14 : 8)),
-            vertical: isVerySmall ? 6 : (showLabels ? 12 : 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(
+            showLabels ? 38 : (isVerySmall ? 30 : 34),
           ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              isVerySmall ? 16 : (showLabels ? 28 : 22),
-            ),
-            gradient: selected
-                ? LinearGradient(
-                    colors: [
-                      leafGreen.withValues(alpha: 0.95),
-                      waterBlue.withValues(alpha: 0.95),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            color: selected ? null : Colors.transparent,
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: leafGreen.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: isVerySmall
-                    ? 20
-                    : (showLabels ? (selected ? 22 : 20) : (selected ? 24 : 22)),
-                color: selected ? Colors.white : Colors.grey.shade700,
-              ),
-              // Hanya tampilkan text di layar >= 420px
-              if (showLabels) ...[
-                const SizedBox(height: 4),
-                Text(
-                  _getNavLabel(index),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: selected ? Colors.white : Colors.grey.shade600,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.clip,
-                  maxLines: 1,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  width: 1.2,
                 ),
-              ],
-            ],
+              ),
+              child: Row(
+                children: [
+                  _navItem(Icons.home_rounded, 0, showLabels, isVerySmall),
+                  _navItem(Icons.people_rounded, 1, showLabels, isVerySmall),
+                  _navItem(Icons.sensors_rounded, 2, showLabels, isVerySmall),
+                  _navItem(Icons.analytics_rounded, 3, showLabels, isVerySmall),
+                  _navItem(Icons.message_rounded, 4, showLabels, isVerySmall),
+                ],
+              ),
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
+    final selected = index == _selectedIndex;
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onItemTapped(index),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsets.symmetric(
+              horizontal: isVerySmall
+                  ? (selected ? 8 : 4)
+                  : (showLabels ? (selected ? 22 : 14) : (selected ? 14 : 8)),
+              vertical: isVerySmall ? 6 : (showLabels ? 12 : 10),
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(
+                isVerySmall ? 16 : (showLabels ? 28 : 22),
+              ),
+              gradient: selected
+                  ? LinearGradient(
+                      colors: [
+                        leafGreen.withValues(alpha: 0.95),
+                        waterBlue.withValues(alpha: 0.95),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: selected ? null : Colors.transparent,
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: leafGreen.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: isVerySmall
+                      ? 20
+                      : (showLabels
+                            ? (selected ? 22 : 20)
+                            : (selected ? 24 : 22)),
+                  color: selected ? Colors.white : Colors.grey.shade700,
+                ),
+                // Hanya tampilkan text di layar >= 420px
+                if (showLabels) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _getNavLabel(index),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: selected ? Colors.white : Colors.grey.shade600,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   String _getNavLabel(int index) {
     switch (index) {
@@ -927,154 +935,162 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
   }
 
   Widget _buildHeader() {
-  // Deteksi ukuran layar
-  final screenWidth = MediaQuery.of(context).size.width;
-  final isSmallScreen = screenWidth < 380;
+    // Deteksi ukuran layar
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 380;
 
-  return Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [deepGreen, forestGreen],
-        stops: const [0.0, 0.8],
-      ),
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
-      boxShadow: [
-        BoxShadow(
-          color: deepGreen.withValues(alpha: 0.4),
-          blurRadius: 40,
-          spreadRadius: 2,
-          offset: const Offset(0, 10),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [deepGreen, forestGreen],
+          stops: const [0.0, 0.8],
         ),
-      ],
-    ),
-    child: SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          // TOP BAR dengan Refresh Button
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              isSmallScreen ? 16 : 24,
-              20,
-              isSmallScreen ? 16 : 24,
-              0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Left Section - Logo & Title
-                Expanded(
-                  child: Row(
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
+        boxShadow: [
+          BoxShadow(
+            color: deepGreen.withValues(alpha: 0.4),
+            blurRadius: 40,
+            spreadRadius: 2,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // TOP BAR dengan Refresh Button
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isSmallScreen ? 16 : 24,
+                20,
+                isSmallScreen ? 16 : 24,
+                0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Left Section - Logo & Title
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                              isSmallScreen ? 12 : 16,
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.admin_panel_settings_rounded,
+                            color: Colors.white,
+                            size: isSmallScreen ? 24 : 40,
+                          ),
+                        ),
+                        SizedBox(width: isSmallScreen ? 10 : 16),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "HydroGrow",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: isSmallScreen ? 18 : 24,
+                                  letterSpacing: 0.5,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                isSmallScreen
+                                    ? "Admin"
+                                    : "System Administration",
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: isSmallScreen ? 11 : 13,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 1,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Right Section - Action Buttons
+                  Row(
                     children: [
+                      // Refresh Button
                       Container(
-                        padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
+                        padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
+                          borderRadius: BorderRadius.circular(
+                            isSmallScreen ? 12 : 16,
+                          ),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.1),
                           ),
                         ),
-                        child: Icon(
-                          Icons.admin_panel_settings_rounded,
-                          color: Colors.white,
-                          size: isSmallScreen ? 24 : 40,
+                        child: GestureDetector(
+                          onTap: _manualRefresh,
+                          child: Icon(
+                            Icons.refresh_rounded,
+                            color: Colors.white,
+                            size: isSmallScreen ? 20 : 24,
+                          ),
                         ),
                       ),
-                      SizedBox(width: isSmallScreen ? 10 : 16),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      SizedBox(width: isSmallScreen ? 8 : 12),
+                      // Notification Button
+                      Container(
+                        padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(
+                            isSmallScreen ? 12 : 16,
+                          ),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Stack(
                           children: [
-                            Text(
-                              "HydroGrow",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: isSmallScreen ? 18 : 24,
-                                letterSpacing: 0.5,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                            Icon(
+                              Icons.notifications_outlined,
+                              color: Colors.white,
+                              size: isSmallScreen ? 20 : 24,
                             ),
-                            Text(
-                              isSmallScreen ? "Admin" : "System Administration",
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontSize: isSmallScreen ? 11 : 13,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 1,
+                            if (totalMessages > 0)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: sunlightOrange,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                // Right Section - Action Buttons
-                Row(
-                  children: [
-                    // Refresh Button
-                    Container(
-                      padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: GestureDetector(
-                        onTap: _manualRefresh,
-                        child: Icon(
-                          Icons.refresh_rounded,
-                          color: Colors.white,
-                          size: isSmallScreen ? 20 : 24,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: isSmallScreen ? 8 : 12),
-                    // Notification Button
-                    Container(
-                      padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Icon(
-                            Icons.notifications_outlined,
-                            color: Colors.white,
-                            size: isSmallScreen ? 20 : 24,
-                          ),
-                          if (totalMessages > 0)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: sunlightOrange,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
             const SizedBox(height: 24),
 
@@ -1137,7 +1153,9 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            systemOnline ? "All Systems Operational" : "System Maintenance",
+                            systemOnline
+                                ? "All Systems Operational"
+                                : "System Maintenance",
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 26,
@@ -1165,7 +1183,9 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                               gradient: LinearGradient(
                                 colors: [
                                   systemOnline ? leafGreen : adminRed,
-                                  systemOnline ? waterBlue : adminRed.withOpacity(0.8),
+                                  systemOnline
+                                      ? waterBlue
+                                      : adminRed.withOpacity(0.8),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -1193,7 +1213,9 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  systemOnline ? "System Online" : "System Offline",
+                                  systemOnline
+                                      ? "System Online"
+                                      : "System Offline",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -1208,7 +1230,9 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                     ),
                     const SizedBox(width: 20),
                     Icon(
-                      systemOnline ? Icons.verified_rounded : Icons.warning_rounded,
+                      systemOnline
+                          ? Icons.verified_rounded
+                          : Icons.warning_rounded,
                       color: Colors.white,
                       size: 80,
                     ),
@@ -1276,116 +1300,116 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                     ],
                   )
                 : weatherData != null
-                    ? Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
+                ? Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
                             ),
-                            child: _getWeatherIcon(
-                              _getCurrentWeatherCode(),
-                              size: 40,
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          ],
+                        ),
+                        child: _getWeatherIcon(
+                          _getCurrentWeatherCode(),
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.location_on,
-                                      size: 16,
-                                      color: deepGreen.withValues(alpha: 0.7),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      selectedCity,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: deepGreen.withValues(alpha: 0.8),
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ],
+                                Icon(
+                                  Icons.location_on,
+                                  size: 16,
+                                  color: deepGreen.withValues(alpha: 0.7),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(width: 6),
                                 Text(
-                                  _getWeatherDesc(_getCurrentWeatherCode()),
+                                  selectedCity,
                                   style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: deepGreen,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: deepGreen.withValues(alpha: 0.8),
                                     letterSpacing: 0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Current weather conditions',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
                               ],
                             ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°',
-                                style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w800,
-                                  color: deepGreen,
-                                  height: 1,
-                                  letterSpacing: -1,
-                                ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _getWeatherDesc(_getCurrentWeatherCode()),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: deepGreen,
+                                letterSpacing: 0.5,
                               ),
-                              Text(
-                                'Celsius',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Current weather conditions',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w500,
                               ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Icon(
-                            Icons.cloud_off,
-                            color: Colors.grey.shade400,
-                            size: 28,
-                          ),
-                          const SizedBox(width: 12),
                           Text(
-                            'Weather unavailable',
+                            '${weatherData!['data'][0]['cuaca'][0][0]['t'] ?? '--'}°',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                              color: deepGreen,
+                              height: 1,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          Text(
+                            'Celsius',
+                            style: TextStyle(
+                              fontSize: 12,
                               color: Colors.grey.shade600,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cloud_off,
+                        color: Colors.grey.shade400,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Weather unavailable',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
 
           const SizedBox(height: 16),
@@ -1436,167 +1460,164 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                     ],
                   )
                 : airQualityData != null
-                    ? Column(
+                ? Column(
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.08),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
                                 ),
-                                child: Icon(
-                                  Icons.air_rounded,
-                                  size: 40,
-                                  color: aqiColor,
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.air_rounded,
+                              size: 40,
+                              color: aqiColor,
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.location_on,
-                                          size: 16,
-                                          color:
-                                              deepGreen.withValues(alpha: 0.7),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Air Quality',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color:
-                                                deepGreen.withValues(alpha: 0.8),
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                      ],
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 16,
+                                      color: deepGreen.withValues(alpha: 0.7),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(width: 6),
                                     Text(
-                                      aqiStatus,
+                                      'Air Quality',
                                       style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                        color: deepGreen,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: deepGreen.withValues(alpha: 0.8),
                                         letterSpacing: 0.5,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Real-time monitoring',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
                                   ],
                                 ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '${airQualityData!['data']['aqi'] ?? airQualityData!['aqi']}',
-                                    style: TextStyle(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.w800,
-                                      color: aqiColor,
-                                      height: 1,
-                                      letterSpacing: -1,
-                                    ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  aqiStatus,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: deepGreen,
+                                    letterSpacing: 0.5,
                                   ),
-                                  Text(
-                                    'AQI',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Real-time monitoring',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          // ======= TAMBAHKAN INI =======
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _pollutantInfo(
-                                  'PM2.5',
-                                  '${airQualityData!['pm25'] ?? '--'}',
-                                  'μg/m³',
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 40,
-                                  color: Colors.grey.shade300,
-                                ),
-                                _pollutantInfo(
-                                  'PM10',
-                                  '${airQualityData!['pm10'] ?? '--'}',
-                                  'μg/m³',
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 40,
-                                  color: Colors.grey.shade300,
-                                ),
-                                _pollutantInfo(
-                                  'O₃',
-                                  '${airQualityData!['o3'] ?? '--'}',
-                                  'ppb',
                                 ),
                               ],
                             ),
                           ),
-                          // ======= SAMPAI SINI =======
-                        ],
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.air_rounded,
-                            color: Colors.grey.shade400,
-                            size: 28,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Air quality unavailable',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${airQualityData!['data']['aqi'] ?? airQualityData!['aqi']}',
+                                style: TextStyle(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w800,
+                                  color: aqiColor,
+                                  height: 1,
+                                  letterSpacing: -1,
+                                ),
+                              ),
+                              Text(
+                                'AQI',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
+                      // ======= TAMBAHKAN INI =======
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _pollutantInfo(
+                              'PM2.5',
+                              '${airQualityData!['pm25'] ?? '--'}',
+                              'μg/m³',
+                            ),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: Colors.grey.shade300,
+                            ),
+                            _pollutantInfo(
+                              'PM10',
+                              '${airQualityData!['pm10'] ?? '--'}',
+                              'μg/m³',
+                            ),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: Colors.grey.shade300,
+                            ),
+                            _pollutantInfo(
+                              'O₃',
+                              '${airQualityData!['o3'] ?? '--'}',
+                              'ppb',
+                            ),
+                          ],
+                        ),
+                      ),
+                      // ======= SAMPAI SINI =======
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.air_rounded,
+                        color: Colors.grey.shade400,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Air quality unavailable',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
 
           const SizedBox(height: 32),
@@ -2021,7 +2042,9 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.5),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
@@ -2336,11 +2359,7 @@ Widget _navItem(IconData icon, int index, bool showLabels, bool isVerySmall) {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 24,
-                  color: color,
-                ),
+                Icon(Icons.chevron_right_rounded, size: 24, color: color),
               ],
             ),
           ),
