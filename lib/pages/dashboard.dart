@@ -975,52 +975,23 @@ class _DashboardPageState extends State<DashboardPage> {
                   // Left Section - Logo & Title
                   Expanded(
                     child: Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(
-                              isSmallScreen ? 12 : 16,
-                            ),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.admin_panel_settings_rounded,
-                            color: Colors.white,
-                            size: isSmallScreen ? 24 : 40,
-                          ),
-                        ),
-                        SizedBox(width: isSmallScreen ? 10 : 16),
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "HydroGrow",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: isSmallScreen ? 18 : 24,
-                                  letterSpacing: 0.5,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                      children: [      
+                        GestureDetector(
+                          onTap: _showDevelopersModal, // Tambahkan onTap di sini
+                          child: Container(
+                            padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
                               ),
-                              Text(
-                                isSmallScreen
-                                    ? "Admin"
-                                    : "System Administration",
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  fontSize: isSmallScreen ? 11 : 13,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 1,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                            ),
+                            child: Icon(
+                              Icons.admin_panel_settings_rounded,
+                              color: Colors.white,
+                              size: isSmallScreen ? 24 : 40,
+                            ),
                           ),
                         ),
                       ],
@@ -2505,4 +2476,396 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+
+  // Tambahkan fungsi ini di dalam class _DashboardPageState
+void _showDevelopersModal() {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final isSmallScreen = screenWidth < 380;
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) {
+      return BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          margin: EdgeInsets.fromLTRB(
+            20,
+            40,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [deepGreen, forestGreen],
+              stops: const [0.0, 0.8],
+            ),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: deepGreen.withOpacity(0.4),
+                blurRadius: 40,
+                spreadRadius: 2,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(32),
+                    topRight: Radius.circular(32),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: leafGreen.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: leafGreen.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.code_rounded,
+                        color: leafGreen,
+                        size: isSmallScreen ? 24 : 32,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Development Team",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isSmallScreen ? 18 : 22,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            "HydroGrow Admin System",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: isSmallScreen ? 12 : 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white.withOpacity(0.8),
+                        size: isSmallScreen ? 20 : 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // App Description
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.eco_rounded,
+                            color: leafGreen,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            "About HydroGrow",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "HydroGrow is an intelligent hydroponic monitoring system "
+                        "designed to optimize plant growth through real-time sensor "
+                        "data analysis. This admin dashboard provides comprehensive "
+                        "control over the entire system including user management, "
+                        "sensor monitoring, analytics, and system configuration.",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.justify,
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _featureChip("🌱 Real-time Monitoring", leafGreen),
+                          _featureChip("💧 Hydroponic Control", waterBlue),
+                          _featureChip("📊 Data Analytics", adminBlue),
+                          _featureChip("👥 User Management", adminPurple),
+                          _featureChip("🔐 Admin Dashboard", sunlightOrange),
+                          _featureChip("📱 Multi-platform", soilBrown),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Developers List Title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [leafGreen, waterBlue],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      "Development Team Members",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Developers List
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    child: Column(
+                      children: [
+                        // Frontend Developer
+                        _developerCard(
+                          name: "Verenada Arsy Mardatillah",
+                          role: "152023058",
+                          avatarColor: waterBlue,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // // Backend Developer
+                        // _developerCard(
+                        //   name: "Rico Fadli Alfiansyah",
+                        //   role: "152023090",
+                        //   avatarColor: leafGreen,
+                        // ),
+                        // const SizedBox(height: 16),
+
+                        // Lead Developer
+                        _developerCard(
+                          name: "Aliyya Rahmawati Putri",
+                          role: "152023093",
+                          avatarColor: sunlightOrange,
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // // IoT Specialist
+                        // _developerCard(
+                        //   name: "Jihan Nur Alfiah",
+                        //   role: "152024116",
+                        //   avatarColor: adminPurple,
+                        // ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Footer
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Text(
+                      "HydroGrow Admin v1.0.0",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "© 2024 HydroGrow Team. All rights reserved.",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 10,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+// Widget untuk feature chips
+Widget _featureChip(String text, Color color) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.15),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: color.withOpacity(0.3),
+        width: 1,
+      ),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.9),
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
+}
+
+// Tambahkan widget untuk card developer
+Widget _developerCard({
+  required String name,
+  required String role,
+  // required String skills,
+  required Color avatarColor,
+}) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.12),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: Colors.white.withOpacity(0.1),
+      ),
+    ),
+    child: Row(
+      children: [
+        // Avatar
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                avatarColor.withOpacity(0.9),
+                avatarColor.withOpacity(0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: avatarColor.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              name.split(' ').map((n) => n[0]).take(2).join(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+        
+        const SizedBox(width: 16),
+        
+        // Info
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                role,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }
