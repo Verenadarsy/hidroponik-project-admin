@@ -8,7 +8,7 @@ import '../models/message_model.dart';
 
 class ApiService {
   static const String baseUrl =
-      'https://uncollapsable-overfly-blaine.ngrok-free.dev';
+      'https://7e60c5098efd.ngrok-free.app';
 
   // Helper untuk headers
   static Map<String, String> _getHeaders(String token) {

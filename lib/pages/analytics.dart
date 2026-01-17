@@ -22,7 +22,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   final Color accentPurple = const Color(0xFF7B68B5);
 
   static const String baseUrl =
-      'https://uncollapsable-overfly-blaine.ngrok-free.dev/api';
+      'https://7e60c5098efd.ngrok-free.app/api';
   String? _token;
 
   // Analytics data

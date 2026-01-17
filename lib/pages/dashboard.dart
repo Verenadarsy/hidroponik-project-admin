@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/shared.dart';
 import '../models/sensor_model.dart';
 import 'user.dart';
@@ -16,6 +17,7 @@ import 'log.dart';
 import 'messages.dart';
 import 'splash_screen.dart'; // Import splash screen
 import 'login.dart'; // Import login page
+
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -43,7 +45,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // API endpoint
   static const String baseUrl =
-      'https://uncollapsable-overfly-blaine.ngrok-free.dev';
+      'https://7e60c5098efd.ngrok-free.app';
 
   // State variables
   int _selectedIndex = 0;
@@ -975,7 +977,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   // Left Section - Logo & Title
                   Expanded(
                     child: Row(
-                      children: [      
+                      children: [
                         GestureDetector(
                           onTap: _showDevelopersModal, // Tambahkan onTap di sini
                           child: Container(
@@ -1922,76 +1924,84 @@ class _DashboardPageState extends State<DashboardPage> {
 
           const SizedBox(height: 40),
 
-          // System Info Card
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  leafGreen.withValues(alpha: 0.1),
-                  leafGreen.withValues(alpha: 0.05),
-                ],
-              ),
+          // About Card - Clickable untuk show modal
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _showDevelopersModal,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: leafGreen.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: leafGreen.withValues(alpha: 0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      leafGreen.withValues(alpha: 0.1),
+                      leafGreen.withValues(alpha: 0.05),
                     ],
                   ),
-                  child: Icon(
-                    Icons.info_outline_rounded,
-                    color: leafGreen,
-                    size: 28,
-                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "System Information",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                          color: deepGreen,
-                          letterSpacing: 0.5,
-                        ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: leafGreen.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: leafGreen.withValues(alpha: 0.2),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        isLoading
-                            ? "Fetching live data from sensors..."
-                            : "${allSensors.length} sensor readings • ${_getTotalSensors()} active sensors • $totalMessages new messages\nLast updated: ${_getLastUpdateTime()}",
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Icon(
+                        Icons.info_outline_rounded,
+                        color: leafGreen,
+                        size: 28,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "About HydroGrow",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: deepGreen,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Tap to view development team & app info",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 24,
+                      color: leafGreen,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
 
@@ -2579,7 +2589,7 @@ void _showDevelopersModal() {
                   ],
                 ),
               ),
-              
+
               // App Description
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
@@ -2644,7 +2654,7 @@ void _showDevelopersModal() {
                   ),
                 ),
               ),
-              
+
               // Developers List Title
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
@@ -2675,7 +2685,7 @@ void _showDevelopersModal() {
                   ],
                 ),
               ),
-              
+
               // Developers List
               Flexible(
                 child: SingleChildScrollView(
@@ -2707,7 +2717,7 @@ void _showDevelopersModal() {
                           avatarColor: sunlightOrange,
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // // IoT Specialist
                         // _developerCard(
                         //   name: "Jihan Nur Alfiah",
@@ -2719,7 +2729,7 @@ void _showDevelopersModal() {
                   ),
                 ),
               ),
-              
+
               // Footer
               Container(
                 padding: const EdgeInsets.all(24),
@@ -2749,6 +2759,46 @@ void _showDevelopersModal() {
                         fontSize: 10,
                       ),
                       textAlign: TextAlign.center,
+                    ),
+
+                    // HAPUS COMMENT INI: // Footer  ← HAPUS BARIS INI
+                    const SizedBox(height: 20),
+
+                    // YouTube Demo Button
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          launch('https://youtu.be/cJVYgYBgJJI');
+                          },
+                        icon: Icon(
+                          Icons.play_circle_outline_rounded,
+                          size: 24,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          "Watch Demo Video",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade600,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 5,
+                          shadowColor: Colors.red.shade600.withOpacity(0.4),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -2835,9 +2885,9 @@ Widget _developerCard({
             ),
           ),
         ),
-        
+
         const SizedBox(width: 16),
-        
+
         // Info
         Expanded(
           child: Column(

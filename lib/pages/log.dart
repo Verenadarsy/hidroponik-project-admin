@@ -16,7 +16,7 @@ class _LogsPageState extends State<LogsPage> {
   final Color creamBackground = const Color(0xFFF8F9FA);
 
   static const String baseUrl =
-      'https://uncollapsable-overfly-blaine.ngrok-free.dev/api';
+      'https://7e60c5098efd.ngrok-free.app/api';
   String? _token;
 
   List<dynamic> logs = [];
